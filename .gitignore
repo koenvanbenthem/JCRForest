@@ -1,6 +1,6 @@
-.Rproj.user
-.Rhistory
-.RData
-.o
-.so
-JCRForest.Rprojo
+*.Rproj.user
+*.Rhistory
+*.RData
+*.o
+*.so
+JCRForest.Rproj
