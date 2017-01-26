@@ -7,6 +7,9 @@
 #' @param mtry Number of features examined per tree
 #' @param Ntree Number of trees in the forest
 #' 
+#' @useDynLib JCRForest
+#' @importFrom Rcpp sourceCpp
+#' 
 #' @export
 mixed_forest <- function(x,y,mtry,Ntree){
   
@@ -18,7 +21,7 @@ mixed_forest <- function(x,y,mtry,Ntree){
   if (any(is.na(x)) | any(is.na(y))) stop("missing values are not allowed")
   
   # Forest building
-  forest <- rep("tree",7)
+  forest <- timesTwo(mtry)
   # Return
   return(structure(list(forest=forest),class="jcr_forest"))
 }
