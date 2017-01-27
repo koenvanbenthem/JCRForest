@@ -6,7 +6,7 @@
 using namespace Rcpp;
 
 // timesTwo
-int timesTwo(int x);
+Rcpp::List timesTwo(int x);
 RcppExport SEXP JCRForest_timesTwo(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
