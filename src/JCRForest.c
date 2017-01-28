@@ -11,13 +11,14 @@ void build_jcr_tree(int* arr,int maxnodes) {
 }
 
 
-void build_jcr_forest(double *x, int *nsample , int *ntree, int *maxnodes) {
+void build_jcr_forest(double *x, double* yc, int* yf, int *nsample , int *nvar, int *ntree, int *maxnodes) {
   
-  double bla = 4.0;
   int xdim = *nsample;
-  //*ntree = bla;
+  
   int row = 5;
   int col = 1;
+
+  double bla = 4.0;
   
   x[row + col*xdim] = bla;
   

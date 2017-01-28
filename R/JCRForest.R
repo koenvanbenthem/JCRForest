@@ -10,7 +10,7 @@
 #' @useDynLib JCRForest
 #' 
 #' @export
-jcr_forest <- function(x,y,mtry,Ntree){
+jcr_forest <- function(x,y,mtry,Ntree,minsize=5){
   
   # Data checking and preparation
   if (nrow(x) != nrow(y)) stop("x and y must have the same number of rows\n")
@@ -21,8 +21,18 @@ jcr_forest <- function(x,y,mtry,Ntree){
   if (any(is.na(x)) | any(is.na(y))) stop("missing values are not allowed")
   if (mtry < 1 | mtry > ncol(x)) stop("mtry must be between 1 and the number of explanatory variables")
   
+  yc <- y[,sapply(y,class) %in% c('numeric','integer')]
+  yf <- as.integer(y[,sapply(y,class) %in% c('factor')])
+  
   # Forest building
-  rfout <- .C("build_jcr_forest",x=x,nsample=nrow(x),ntree=20,maxnodes=10)
+  rfout <- .C("build_jcr_forest",
+              x=x,
+              yc=yc,
+              yf=yf,
+              nsample=nrow(x),
+              nvar=ncol(x),
+              ntree=20,
+              maxnodes=10)
   
   return(rfout)
 }
