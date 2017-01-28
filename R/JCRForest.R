@@ -8,10 +8,9 @@
 #' @param Ntree Number of trees in the forest
 #' 
 #' @useDynLib JCRForest
-#' @importFrom Rcpp sourceCpp
 #' 
 #' @export
-mixed_forest <- function(x,y,mtry,Ntree){
+jcr_forest <- function(x,y,mtry,Ntree){
   
   # Data checking and preparation
   if (nrow(x) != nrow(y)) stop("x and y must have the same number of rows\n")
@@ -23,7 +22,7 @@ mixed_forest <- function(x,y,mtry,Ntree){
   if (mtry < 1 | mtry > ncol(x)) stop("mtry must be between 1 and the number of explanatory variables")
   
   # Forest building
-  forest <- timesTwo(mtry)
-  # Return
-  return(structure(list(forest=forest),class="jcr_forest"))
+  rfout <- .C("build_jcr_forest",x=x,nsample=nrow(x),ntree=20,maxnodes=10)
+  
+  return(rfout)
 }
