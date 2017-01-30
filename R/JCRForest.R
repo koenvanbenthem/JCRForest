@@ -24,15 +24,23 @@ jcr_forest <- function(x,y,mtry,Ntree,minsize=5){
   yc <- y[,sapply(y,class) %in% c('numeric','integer')]
   yf <- as.integer(y[,sapply(y,class) %in% c('factor')])
   
+  nrnodes = 10
+  cat(Ntree,"\n\n")
   # Forest building
   rfout <- .C("build_jcr_forest",
               x=x,
               yc=yc,
               yf=yf,
-              nsample=nrow(x),
-              nvar=ncol(x),
-              ntree=20,
-              maxnodes=10)
+              nsample=as.integer(nrow(x)),
+              nvar=as.integer(ncol(x)),
+              ntree=as.integer(Ntree),
+              nrnodes=as.integer(nrnodes),
+              ldaughter=matrix(integer(nrnodes * Ntree),ncol=Ntree),
+              rdaughter=matrix(integer(nrnodes * Ntree),ncol=Ntree),
+              node_status=matrix(integer(nrnodes * Ntree),ncol=Ntree),
+              node_var=matrix(integer(nrnodes * Ntree),ncol=Ntree),
+              node_xvar=matrix(integer(nrnodes * Ntree),ncol=Ntree),
+              PACKAGE="JCRForest")
   
   return(rfout)
 }

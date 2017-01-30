@@ -1,36 +1,35 @@
 #include <R.h>
 #include <Rmath.h>
+#include <stdio.h>
 
-void build_jcr_tree(int* arr,int maxnodes) {
+void calc_split() {
+  
+}
+
+void build_jcr_tree(double *x, double *yc, int *yf, int curr_tree, int *ntree, int *nrnodes,int *ldaughter, int *rdaughter) {
   
   // create vector containing which node is whose left and whose right daughter
-  for(int i=0; i<maxnodes; i++){
-    *(arr+i) = 2;
-  }
+  ldaughter[curr_tree] = curr_tree;
+  rdaughter[0] = 11;
   
 }
 
 
-void build_jcr_forest(double *x, double* yc, int* yf, int *nsample , int *nvar, int *ntree, int *maxnodes) {
+void build_jcr_forest(double *x, double* yc, int* yf, int *nsample , int *nvar, int *ntree, int *nrnodes, int *ldaughter, 
+                      int *rdaughter, int *node_status, int *node_var,int *node_xvar) {
   
   int xdim = *nsample;
-  
-  int row = 5;
-  int col = 1;
 
-  double bla = 4.0;
+  //printf("value is %i",*ntree);
   
-  x[row + col*xdim] = bla;
-  
-  //maxnodes = 2 + ntree;
-  // allocating the arrays for to store the nodes
-  /*int ldaughter[ntree][maxnodes]; // 
-  int rdaughter[ntree][maxnodes]; //
-  int state[ntree][maxnodes]; // distinguish terminal and internal nodes
-  int test_var[ntree][maxnodes]; // which variable does the node test on
-  int test_thr[ntree][maxnodes]; // the value for the test
-  
-  build_jcr_tree(&ldaughter[2][0],maxnodes);
-  */
-
+  // Building the trees
+  for(int i = 0; i < *ntree; i++){
+    
+    int idx = i * *nrnodes;
+    
+    // data selection
+    
+    // actual building
+    build_jcr_tree(x,yc,yf,i,ntree,nrnodes,ldaughter+idx,rdaughter+idx);
+  }
 }
