@@ -41,6 +41,7 @@ jcr_forest <- function(x,y,mtry,Ntree,minsize=5){
               node_status=matrix(integer(nrnodes * Ntree),ncol=Ntree),
               node_var=matrix(integer(nrnodes * Ntree),ncol=Ntree),
               node_xvar=matrix(integer(nrnodes * Ntree),ncol=Ntree),
+              x_sort = numeric(nrow(x)),
               PACKAGE="JCRForest")
   
   return(rfout)
