@@ -1,38 +1,46 @@
 #include <R.h>
 #include <Rmath.h>
 #include <stdio.h>
+#include "utils.h"
 
-void swap_int(int *one, int *two){
-  int temp = *one;
-  *one = *two;
-  *two = temp;
-}
-
-void find_best_split(double *x, double *yc, int *yf, int mtry,int nsample,int nvar,double *x_sort) {
+void find_best_split(double *x, double *yc, int *yf, int mtry,int nsample,int nvar) {
   
   int var_ind[nvar],j;
   for(int i=0; i<nvar;i++) var_ind[i] = i;
   
+  double best_score = 0.0;
+  double curr_score = 0.0;
+  double parent_score = 0.0;
+  
   int last = nvar;
-  //double x_sort[nsample];
+  double x_sort[nsample];
   int x_sort_ind[nsample];
   double yc_sorted[nsample],yf_sorted[nsample];
   
   for(int i=0; i < mtry; i++){
     // select variable
     j = (int) floor(unif_rand() * (last));
-    swap_int(&var_ind[j],&var_ind[last-1]);
+    swap_integers(&var_ind[j],&var_ind[last-1]);
     last--;
     for(int k=0; k<nsample; k++) x_sort[k] = x[var_ind[last] * nsample+k];  
     // sort x variables and obtain the ordering
     R_qsort_I(x_sort,x_sort_ind,1,nsample);
     
+    // assign parent score
+    
+    for(int k=0; k<(nsample-1);k++){ // for each possible split
+    
+      if(curr_score-parent_score < best_score){
+        best_score = curr_score - parent_score;
+        
+      }  
+    }
     // the following is not completely necessary, one can also take these values out on the go
     // [however, that works ]
-    for(int k=0; k<nsample; k++){
+    /*for(int k=0; k<nsample; k++){
       yc_sorted[k] = yc[x_sort_ind[k]];
       yf_sorted[k] = yf[x_sort_ind[k]];
-    }
+    }*/
   }
   
   
@@ -41,11 +49,11 @@ void find_best_split(double *x, double *yc, int *yf, int mtry,int nsample,int nv
 }
 
 void build_jcr_tree(double *x, double *yc, int *yf, int curr_tree, int *ntree, int *nrnodes,int *ldaughter, int *rdaughter,
-                    int mtry,int nsample,int nvar, double *x_sort) {
+                    int mtry,int nsample,int nvar) {
   
   
   for(int i=0; i < *nrnodes; i++){
-    find_best_split(x,yc,yf,mtry,nsample,nvar,x_sort);
+    find_best_split(x,yc,yf,mtry,nsample,nvar);
   }
   // create vector containing which node is whose left and whose right daughter
   ldaughter[curr_tree] = curr_tree;
@@ -54,8 +62,9 @@ void build_jcr_tree(double *x, double *yc, int *yf, int curr_tree, int *ntree, i
 }
 
 
-void build_jcr_forest(double *x, double* yc, int* yf, int *nsample , int *nvar, int *mtry, int *ntree, 
-                      int *nrnodes, int *ldaughter, int *rdaughter, int *node_status, int *node_var,int *node_xvar, double * x_sort) {
+void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample , int *nvar, int *mtry, int *ntree, 
+                      int *nrnodes, int *ldaughter, int *rdaughter, int *node_status, int *node_var,
+                      int *node_xvar) {
   
 
   GetRNGstate();
@@ -84,11 +93,11 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nsample , int *nvar, 
     }
     //printf("the random number %d \n",ind);
     // actual tree building
-    build_jcr_tree(x_bag,yc_bag,yf_bag,i,ntree,nrnodes,ldaughter+idx,rdaughter+idx,*mtry,*nsample,*nvar,x_sort);
+    build_jcr_tree(x_bag,yc_bag,yf_bag,i,ntree,nrnodes,ldaughter+idx,rdaughter+idx,*mtry,*nsample,*nvar);
     
     // tree prediction
   }
-
+  
   PutRNGstate();  
   
 }
