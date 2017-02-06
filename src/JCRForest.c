@@ -3,7 +3,17 @@
 #include <stdio.h>
 #include "utils.h"
 
-void find_best_split(double *x, double *yc, int *yf, int mtry,int nsample,int nvar) {
+double gini_impurity(int nind, int nclass){
+  
+  double freq[nclass];
+  for(int i=0; i<nclass; i++) freq[i] = 0;
+  
+  for(int i = 0; i < nind; i++){
+    
+  }
+}
+
+void find_best_split(double *x, double *yc, int *yf,int nclass, int mtry,int nsample,int nvar) {
   
   int var_ind[nvar],j;
   for(int i=0; i<nvar;i++) var_ind[i] = i;
@@ -48,7 +58,7 @@ void find_best_split(double *x, double *yc, int *yf, int mtry,int nsample,int nv
   
 }
 
-void build_jcr_tree(double *x, double *yc, int *yf, int curr_tree, int *ntree, int *nrnodes,int *ldaughter, int *rdaughter,
+void build_jcr_tree(double *x, double *yc, int *yf, int nclass, int curr_tree, int *ntree, int *nrnodes,int *ldaughter, int *rdaughter,
                     int mtry,int nsample,int nvar) {
   
   
@@ -93,7 +103,7 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
     }
     //printf("the random number %d \n",ind);
     // actual tree building
-    build_jcr_tree(x_bag,yc_bag,yf_bag,i,ntree,nrnodes,ldaughter+idx,rdaughter+idx,*mtry,*nsample,*nvar);
+    build_jcr_tree(x_bag,yc_bag,yf_bag,*nclass,i,ntree,nrnodes,ldaughter+idx,rdaughter+idx,*mtry,*nsample,*nvar);
     
     // tree prediction
   }
