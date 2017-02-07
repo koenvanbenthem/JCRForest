@@ -10,7 +10,7 @@
 #' @useDynLib JCRForest
 #' 
 #' @export
-jcr_forest <- function(x,y,mtry,Ntree,minsize=5){
+jcr_forest <- function(x,y,mtry,Ntree,minsize=5,bla=1:20){
   
   # Data checking and preparation
   if (nrow(x) != nrow(y)) stop("x and y must have the same number of rows\n")
@@ -43,6 +43,9 @@ jcr_forest <- function(x,y,mtry,Ntree,minsize=5){
               node_status=matrix(integer(nrnodes * Ntree),ncol=Ntree),
               node_var=matrix(integer(nrnodes * Ntree),ncol=Ntree),
               node_xvar=matrix(integer(nrnodes * Ntree),ncol=Ntree),
+              dum_vect=as.numeric(bla),
+              dum_long=as.integer(length(bla)),
+              dum_ind=as.integer((1:length(bla))*2),
               PACKAGE="JCRForest")
   
   return(rfout)

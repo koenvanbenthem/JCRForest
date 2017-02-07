@@ -3,8 +3,13 @@ dat$x[,1] <- sample(1:20)
 dat$x[,2] <- sample(21:40)
 dat$x[,3] <- sample(41:60)
 
+gt <- sample(100,20,replace=TRUE)
+output <- jcr_forest(dat$x,dat$y,3,10,bla=gt)
 
-output <- jcr_forest(dat$x,dat$y,3,10)
+output$dum_ind
+output$dum_vect
+gt[output$dum_ind/2]
+
 output
 #dat$y$y2 <- factor(1:20)
 # apply(output$x_bag,1,FUN = function(z) which(apply(dat$x,1 ,FUN = function(p) all(z==p))))
