@@ -27,6 +27,8 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   double parent_score = 0.0;
   
   double pcx[*nclass];
+  double pcxl[*nclass];
+  double pcxr[*nclass];
   
   // adapt:: take only values from the given nodes
   for(int i=0; i < *nclass; i++) pcx[i] = 0;
@@ -48,11 +50,15 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     // copy the variables in temporary vectors
     for(int k=0; k< *nsample; k++) x_sort[k] = x[var_ind[last] * *nsample+k];  
     // sort x variables and obtain the ordering -- adapt x_sort_ind properly
-    //R_qsort_I(x_sort,x_sort_ind,1,*nsample);
-    printf("%d\n\n",last);
+    R_qsort_I(x_sort,x_sort_ind,1,*nsample);
+    //printf("%d\n\n",var_ind[last]);
     // assign parent score
     
-    for(int k=0; k<(*nsample-1);k++){ // for each possible split
+    // assign children distribution vectors
+    memcpy(pcxl,pcx,*nclass);
+    for(int k=0; k < *nclass; k++) pcxr[k] = 0;
+    
+    for(int k=start; k<end;k++){ // for each possible split
       //curr_score = H_c();
       if(curr_score-parent_score < best_score){
         best_score = curr_score - parent_score;

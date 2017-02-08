@@ -1,8 +1,8 @@
-dat <- data_gen(20,Nx=4)
+dat <- data_gen(20,Nx=3)
 dat$x[,1] <- sample(1:20)
 dat$x[,2] <- sample(21:40)
 dat$x[,3] <- sample(41:60)
-dat$x[,4] <- sample(61:80)
+#dat$x[,4] <- sample(61:80)
 
 gt <- sample(100,20,replace=TRUE)
 output <- jcr_forest(dat$x,dat$y,3,10,bla=gt)
