@@ -4,28 +4,39 @@
 #include "utils.h"
 #include <Rinternals.h>
 
-double H_c(int nind, int nclass){
+double H_c(double *freqs, int *nclass){
   
-  double freq[nclass];
-  for(int i=0; i<nclass; i++) freq[i] = 0;
+  double score=0;
   
-  for(int i = 0; i < nind; i++){
-    
+  for(int i = 0; i < *nclass; i++){
+    if(freqs[i] > 0){
+      score += freqs[i] * log(freqs[i]);
+    }
   }
+  return(score);
 }
 
-void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *nsample,int *nvar) {
-  
+void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *nsample,int *nvar,int start, int end, int *ndind) {
+
   int var_ind[*nvar],j;
+  
   for(int i=0; i<*nvar;i++) var_ind[i] = i;
   
   double best_score = 0.0;
   double curr_score = 0.0;
   double parent_score = 0.0;
   
+  double pcx[*nclass];
+  
+  // adapt:: take only values from the given nodes
+  for(int i=0; i < *nclass; i++) pcx[i] = 0;
+  for(int i=start; i < end; i++) pcx[yf[ndind[i]]]++;
+  for(int i=0; i < *nclass; i++) pcx[i]/= *nsample;
+  
   int last = *nvar;
   double x_sort[*nsample];
   int x_sort_ind[*nsample];
+  for(int i=0; i<*nsample; i++) x_sort_ind[i] = i;
   double yc_sorted[*nsample],yf_sorted[*nsample];
   
   for(int i=0; i < *mtry; i++){
@@ -33,10 +44,12 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     j = (int) floor(unif_rand() * (double) last);
     swap_integers(&var_ind[j],&var_ind[last-1]);
     last--;
+
+    // copy the variables in temporary vectors
     for(int k=0; k< *nsample; k++) x_sort[k] = x[var_ind[last] * *nsample+k];  
-    // sort x variables and obtain the ordering
-    R_qsort_I(x_sort,x_sort_ind,1,*nsample);
-    printf("blabla2 %d\n",x_sort_ind[2]);
+    // sort x variables and obtain the ordering -- adapt x_sort_ind properly
+    //R_qsort_I(x_sort,x_sort_ind,1,*nsample);
+    printf("%d\n\n",last);
     // assign parent score
     
     for(int k=0; k<(*nsample-1);k++){ // for each possible split
@@ -46,12 +59,7 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
         
       }  
     }
-    // the following is not completely necessary, one can also take these values out on the go
-    // [however, that works ]
-    /*for(int k=0; k<nsample; k++){
-      yc_sorted[k] = yc[x_sort_ind[k]];
-      yf_sorted[k] = yf[x_sort_ind[k]];
-    }*/
+
   }
   
 }
@@ -66,9 +74,11 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
   ndend[0] = *nsample;
   for(int i=0; i<*nsample; i++) ndind[i] = i;
   
-  for(int i=0; i < *nrnodes; i++){
-    find_best_split(x,yc,yf,nclass,mtry,nsample,nvar);
-  }
+  //for(int i=0; i < *nrnodes; i++){
+    int i=0; // temporary for testing purposes
+    find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,ndstart[i],ndend[i],ndind);
+  //}
+  
   // create vector containing which node is whose left and whose right daughter
   ldaughter[curr_tree] = curr_tree;
   rdaughter[0] = 11;
@@ -81,7 +91,7 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
   
 
   GetRNGstate();
-  //printf("value is %i",*ntree);
+  
   double ran_num;
   
   double x_bag[*nsample * *nvar];
@@ -104,26 +114,15 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
         x_bag[k * *nsample + j] = x[k * *nsample + ind];
       }
     }
-    //printf("the random number %d \n",ind);
+    
     // actual tree building
     build_jcr_tree(x_bag,yc_bag,yf_bag,nclass,i,ntree,nrnodes,ldaughter+idx,rdaughter+idx,mtry,nsample,nvar);
     
     // tree prediction
   }
-  /*
-  int *rabbit;
-  int lnth = 20;
-  rabbit = (int *) Calloc(lnth, int);
-  rabbit[4] = 20;
-  rabbit[5] = 54;*/
-  //printf("blabla %d",dum_ind[3]);
-  R_qsort_I(dum_vect,dum_ind,1,20);
-  //for(int i=0; i<20; i++) dum_ind[i] = rabbit[i];
-  
-  printf("blabla %d",dum_ind[3]);
-  
+
+  R_qsort_I(dum_vect,dum_ind,5,10);
+
   PutRNGstate(); 
-  
-  //Free(rabbit);
   
 }

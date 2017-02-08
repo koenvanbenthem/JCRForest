@@ -22,6 +22,8 @@ jcr_forest <- function(x,y,mtry,Ntree,minsize=5,bla=1:20){
   if (mtry < 1 | mtry > ncol(x)) stop("mtry must be between 1 and the number of explanatory variables")
   
   yc <- y[,sapply(y,class) %in% c('numeric','integer')]
+  
+  ## TO DO: make sure numbers are 1:nclass, otherwise C will be upset
   yf <- as.integer(y[,sapply(y,class) %in% c('factor')])
   
   nrnodes <- 10
