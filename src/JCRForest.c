@@ -62,7 +62,8 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     // assign parent score
     
     // assign children distribution vectors (left child gets all, right gets none)
-    memcpy(pcxl,pcx,*nclass);
+    memcpy(pcxl,pcx,*nclass * sizeof(double));
+    //printf("%d, %d\n",pcxl[0],pcxl[1]);
     for(int k=0; k < *nclass; k++) pcxr[k] = 0;
     parent_score = H_c(pcx,nclass,end-start);
     printf("%f\n",parent_score);
@@ -78,7 +79,7 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
       Nl--;
       curr_score = ((double) Nr/((double) (end-start)))*H_c(pcxr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_c(pcxl,nclass,Nl);
       double nvv = curr_score;
-            printf("k = %d, var = %d, the newest score is %f\n",k,var_ind[last],nvv);
+      printf("pcxl1 = %d, pcxl2 = %d, pcxr1 = %d, pcxr2 = %d, Nr = %d, Nl = %d, k = %d, var = %d, the newest score is %f\n",pcxl[0],pcxl[1],pcxr[0],pcxr[1],Nr,Nl,k,var_ind[last],nvv);
       if(parent_score-curr_score < best_score){
         best_score = parent_score-curr_score;
         
