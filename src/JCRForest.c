@@ -4,13 +4,13 @@
 #include "utils.h"
 #include <Rinternals.h>
 
-double H_c(double *freqs, int *nclass){
+double H_c(double *counts, int *nclass, int N){
   
   double score=0;
   
   for(int i = 0; i < *nclass; i++){
-    if(freqs[i] > 0){
-      score += freqs[i] * log(freqs[i]);
+    if(counts[i] > 0){
+      score += counts[i]/N * log(counts[i]/N);
     }
   }
   return(score);
@@ -18,48 +18,65 @@ double H_c(double *freqs, int *nclass){
 
 void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *nsample,int *nvar,int start, int end, int *ndind) {
 
-  int var_ind[*nvar],j;
-  
+  // vector for variable indices - variables of choice are drawn from this vector
+  int var_ind[*nvar];
   for(int i=0; i<*nvar;i++) var_ind[i] = i;
+  int last = *nvar;
   
+  // scoring variables
   double best_score = 0.0;
   double curr_score = 0.0;
   double parent_score = 0.0;
   
+  // keeping track of the frequencies of different classes
+  // parent, left child, right child
   double pcx[*nclass];
   double pcxl[*nclass];
   double pcxr[*nclass];
   
-  // adapt:: take only values from the given nodes
+   // setting initial values (i.e. parent frequencies)
   for(int i=0; i < *nclass; i++) pcx[i] = 0;
-  for(int i=start; i < end; i++) pcx[yf[ndind[i]]]++;
-  for(int i=0; i < *nclass; i++) pcx[i]/= *nsample;
-  
-  int last = *nvar;
+  for(int i=start; i < end; i++) pcx[yf[ndind[i]]-1]++;
+  //for(int i=0; i < *nclass; i++) pcx[i]/= (end-start);
+
+  // vectors for storing the explanatory variable (x_choice) as well as the associated indices
   double x_sort[*nsample];
   int x_sort_ind[*nsample];
-  for(int i=0; i<*nsample; i++) x_sort_ind[i] = i;
-  double yc_sorted[*nsample],yf_sorted[*nsample];
+  for(int i=start; i<end; i++) x_sort_ind[i] = ndind[i];
   
+  double yc_sorted[*nsample];
+  int yf_sorted[*nsample];
+
   for(int i=0; i < *mtry; i++){
+
     // select variable
-    j = (int) floor(unif_rand() * (double) last);
+    int j = (int) floor(unif_rand() * (double) last);
     swap_integers(&var_ind[j],&var_ind[last-1]);
     last--;
 
     // copy the variables in temporary vectors
-    for(int k=0; k< *nsample; k++) x_sort[k] = x[var_ind[last] * *nsample+k];  
+    for(int k=start; k< end; k++) x_sort[k] = x[var_ind[last] * *nsample+k];  
     // sort x variables and obtain the ordering -- adapt x_sort_ind properly
-    R_qsort_I(x_sort,x_sort_ind,1,*nsample);
-    //printf("%d\n\n",var_ind[last]);
+    R_qsort_I(x_sort,x_sort_ind,start+1,end);
+
     // assign parent score
     
-    // assign children distribution vectors
+    // assign children distribution vectors (left child gets all, right gets none)
     memcpy(pcxl,pcx,*nclass);
     for(int k=0; k < *nclass; k++) pcxr[k] = 0;
+    parent_score = H_c(pcx,nclass,end-start);
+    curr_score = parent_score; // initially one of the children is the same as the parent, the other is empty
     
-    for(int k=start; k<end;k++){ // for each possible split
-      //curr_score = H_c();
+    int Nl = end-start;
+    int Nr = 0;
+    for(int k=start; k<(end-1);k++){ // for each possible split
+      
+      pcxl[yf[x_sort_ind[k]]-1]--;
+      pcxr[yf[x_sort_ind[k]]-1]++;
+      Nr++;
+      Nl--;
+      curr_score = ((double) Nr/((double) (end-start)))*H_c(pcxr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_c(pcxl,nclass,Nl);
+      
       if(curr_score-parent_score < best_score){
         best_score = curr_score - parent_score;
         
