@@ -4,13 +4,13 @@
 #include "utils.h"
 #include <Rinternals.h>
 
-double H_c(double *counts, int *nclass, int N){
+double H_c(int *counts, int *nclass, int N){
   
   double score=0;
   
   for(int i = 0; i < *nclass; i++){
     if(counts[i] > 0){
-      score += counts[i]/N * log(counts[i]/N);
+      score -= (double) counts[i]/ (double) N * log((double) counts[i]/ (double) N);
     }
   }
   return(score);
@@ -30,9 +30,9 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   
   // keeping track of the frequencies of different classes
   // parent, left child, right child
-  double pcx[*nclass];
-  double pcxl[*nclass];
-  double pcxr[*nclass];
+  int pcx[*nclass];
+  int pcxl[*nclass];
+  int pcxr[*nclass];
   
    // setting initial values (i.e. parent frequencies)
   for(int i=0; i < *nclass; i++) pcx[i] = 0;
@@ -65,7 +65,8 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     memcpy(pcxl,pcx,*nclass);
     for(int k=0; k < *nclass; k++) pcxr[k] = 0;
     parent_score = H_c(pcx,nclass,end-start);
-    curr_score = parent_score; // initially one of the children is the same as the parent, the other is empty
+    printf("%f\n",parent_score);
+    //curr_score = parent_score; // initially one of the children is the same as the parent, the other is empty
     
     int Nl = end-start;
     int Nr = 0;
@@ -76,9 +77,10 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
       Nr++;
       Nl--;
       curr_score = ((double) Nr/((double) (end-start)))*H_c(pcxr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_c(pcxl,nclass,Nl);
-      
-      if(curr_score-parent_score < best_score){
-        best_score = curr_score - parent_score;
+      double nvv = curr_score;
+            printf("k = %d, var = %d, the newest score is %f\n",k,var_ind[last],nvv);
+      if(parent_score-curr_score < best_score){
+        best_score = parent_score-curr_score;
         
       }  
     }

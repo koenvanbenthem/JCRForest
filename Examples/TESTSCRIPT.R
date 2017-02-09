@@ -13,6 +13,28 @@ gt
 gt[output$dum_ind/2]
 
 output
+
+dat <- data_gen_inf(200,Nx=3)
+output <- jcr_forest(dat$x,dat$y,3,10,bla=gt)
+
+# artif cut-off: 0.5
+H_c <- function(y){
+  pb <- sum(y=='b')/length(y)
+  pa <- 1-pb
+  return(pb*log(pb)+pa*log(pa))
+}
+# all
+H_c(dat$y$y2)
+
+# x1 > 0.5
+for(thr in seq(0.1,0.9,0.05)){
+val <- (sum(dat$x[,1]>thr)/nrow(dat$x))*H_c(dat$y$y2[dat$x[,1]>thr]) + (sum(dat$x[,1]<=thr)/nrow(dat$x))*H_c(dat$y$y2[dat$x[,1]<=thr])
+cat(thr,"\t",val,"\n")
+}
+# pb <- sum(dat$y$y2 == 'b')/nrow(dat$y)
+# pa <- 1-pb
+# pa *log(pa) + pb*log(pb)
+
 #dat$y$y2 <- factor(1:20)
 # apply(output$x_bag,1,FUN = function(z) which(apply(dat$x,1 ,FUN = function(p) all(z==p))))
 # 

@@ -2,5 +2,6 @@
 
 export(build_jcr_forest)
 export(data_gen)
+export(data_gen_inf)
 export(jcr_forest)
 useDynLib(JCRForest)
