@@ -60,13 +60,15 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
 
     // copy the variables in temporary vectors
     for(int k=start; k< end; k++) x_sort[k] = x[var_ind[last] * *nsample+k];  
+    
+    for(int k=start; k<end; k++) x_sort_ind[k] = ndind[k];
     // sort x variables and obtain the ordering -- adapt x_sort_ind properly
     R_qsort_I(x_sort,x_sort_ind,start+1,end);
 
     // assign parent score
     
     // assign children distribution vectors (left child gets all, right gets none)
-    memcpy(pcxl,pcx,*nclass * sizeof(double));
+    memcpy(pcxl,pcx,*nclass * sizeof(int));
     //printf("%d, %d\n",pcxl[0],pcxl[1]);
     for(int k=0; k < *nclass; k++) pcxr[k] = 0;
 
@@ -83,9 +85,9 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
       Nl--;
       curr_score = ((double) Nr/((double) (end-start)))*H_c(pcxr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_c(pcxl,nclass,Nl);
       double nvv = curr_score;
-      printf("(%d, %d)\t",pcxl[0],pcxl[1]);
+      /*printf("(%d, %d)\t",pcxl[0],pcxl[1]);
       printf("(%d, %d)\t",pcxr[0],pcxr[1]);
-      printf("%f \n",curr_score);
+      printf("%f \n",curr_score);*/
       //printf("pcxl1 = %d, pcxl2 = %d, pcxr1 = %d, pcxr2 = %d, Nr = %d, Nl = %d, k = %d, var = %d, the newest score is %f\n",pcxl[0],pcxl[1],pcxr[0],pcxr[1],Nr,Nl,k,var_ind[last],parent_score - nvv);
       if(parent_score-curr_score > best_score){
         best_score = parent_score-curr_score;
