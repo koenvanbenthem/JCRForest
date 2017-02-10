@@ -28,6 +28,7 @@ H_c(dat$y$y2)
 
 # x1 > 0.5
 for(thr in seq(0.1,0.9,0.05)){
+
 val <- (sum(dat$x[,1]>thr)/nrow(dat$x))*H_c(dat$y$y2[dat$x[,1]>thr]) + (sum(dat$x[,1]<=thr)/nrow(dat$x))*H_c(dat$y$y2[dat$x[,1]<=thr])
 cat(thr,"\t",val,"\n")
 }

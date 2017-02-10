@@ -47,6 +47,10 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   double yc_sorted[*nsample];
   int yf_sorted[*nsample];
 
+  int best_var = -1;
+  
+  parent_score = H_c(pcx,nclass,end-start);
+  
   for(int i=0; i < *mtry; i++){
 
     // select variable
@@ -65,8 +69,8 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     memcpy(pcxl,pcx,*nclass * sizeof(double));
     //printf("%d, %d\n",pcxl[0],pcxl[1]);
     for(int k=0; k < *nclass; k++) pcxr[k] = 0;
-    parent_score = H_c(pcx,nclass,end-start);
-    printf("%f\n",parent_score);
+
+    //printf("%f\n",parent_score);
     //curr_score = parent_score; // initially one of the children is the same as the parent, the other is empty
     
     int Nl = end-start;
@@ -79,14 +83,20 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
       Nl--;
       curr_score = ((double) Nr/((double) (end-start)))*H_c(pcxr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_c(pcxl,nclass,Nl);
       double nvv = curr_score;
-      printf("pcxl1 = %d, pcxl2 = %d, pcxr1 = %d, pcxr2 = %d, Nr = %d, Nl = %d, k = %d, var = %d, the newest score is %f\n",pcxl[0],pcxl[1],pcxr[0],pcxr[1],Nr,Nl,k,var_ind[last],nvv);
-      if(parent_score-curr_score < best_score){
+      printf("(%d, %d)\t",pcxl[0],pcxl[1]);
+      printf("(%d, %d)\t",pcxr[0],pcxr[1]);
+      printf("%f \n",curr_score);
+      //printf("pcxl1 = %d, pcxl2 = %d, pcxr1 = %d, pcxr2 = %d, Nr = %d, Nl = %d, k = %d, var = %d, the newest score is %f\n",pcxl[0],pcxl[1],pcxr[0],pcxr[1],Nr,Nl,k,var_ind[last],parent_score - nvv);
+      if(parent_score-curr_score > best_score){
         best_score = parent_score-curr_score;
+        best_var = var_ind[last];
         
       }  
     }
 
   }
+  
+  printf("[%d,%d] Best variable is... %d with a score of %f (ps=%f)\n",start,end,best_var,best_score,parent_score);
   
 }
 
