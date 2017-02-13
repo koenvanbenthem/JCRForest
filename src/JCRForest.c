@@ -16,12 +16,17 @@ double H_c(int *counts, int *nclass, int N){
   return(score);
 }
 
-void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *nsample,int *nvar,int start, int end, int *ndind) {
-
+void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *nsample,int *nvar,
+                     int start, int end, int *ndind, int *best_var, double *best_split, int *best_k) {
+  
   // vector for variable indices - variables of choice are drawn from this vector
   int var_ind[*nvar];
   for(int i=0; i<*nvar;i++) var_ind[i] = i;
   int last = *nvar;
+  
+  *best_var = 0;
+  *best_split = 0.0;
+  *best_k = 0;
   
   // scoring variables
   double best_score = 0.0;
@@ -47,8 +52,6 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   double yc_sorted[*nsample];
   int yf_sorted[*nsample];
 
-  int best_var = -1;
-  
   parent_score = H_c(pcx,nclass,end-start);
   
   for(int i=0; i < *mtry; i++){
@@ -59,9 +62,9 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     last--;
 
     // copy the variables in temporary vectors
-    for(int k=start; k< end; k++) x_sort[k] = x[var_ind[last] * *nsample+k];  
-    
+    for(int k=start; k< end; k++) x_sort[k] = x[var_ind[last] * *nsample+ndind[k]];  
     for(int k=start; k<end; k++) x_sort_ind[k] = ndind[k];
+    
     // sort x variables and obtain the ordering -- adapt x_sort_ind properly
     R_qsort_I(x_sort,x_sort_ind,start+1,end);
 
@@ -69,6 +72,7 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     
     // assign children distribution vectors (left child gets all, right gets none)
     memcpy(pcxl,pcx,*nclass * sizeof(int));
+    
     //printf("%d, %d\n",pcxl[0],pcxl[1]);
     for(int k=0; k < *nclass; k++) pcxr[k] = 0;
 
@@ -91,47 +95,85 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
       //printf("pcxl1 = %d, pcxl2 = %d, pcxr1 = %d, pcxr2 = %d, Nr = %d, Nl = %d, k = %d, var = %d, the newest score is %f\n",pcxl[0],pcxl[1],pcxr[0],pcxr[1],Nr,Nl,k,var_ind[last],parent_score - nvv);
       if(parent_score-curr_score > best_score){
         best_score = parent_score-curr_score;
-        best_var = var_ind[last];
+        *best_var = var_ind[last];
+        *best_k = k;
         
       }  
     }
 
   }
   
-  printf("[%d,%d] Best variable is... %d with a score of %f (ps=%f)\n",start,end,best_var,best_score,parent_score);
+  if(best_k != -1){
+    // store variable
+    for(int k=start; k< end; k++) x_sort[k] = x[*best_var * *nsample+ndind[k]];  
+    
+    // storing the new order of ndind
+    R_qsort_I(x_sort,ndind,start+1,end);
+    
+    *best_split = 0.5*x_sort[*best_k]+0.5*x_sort[*best_k+1];
+  }
+  //printf("[%d,%d] Best variable is... %d with a score of %f (ps=%f)\n",start,end,best_var,best_score,parent_score);
   
 }
 
-void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, int *ntree, int *nrnodes,int *ldaughter, int *rdaughter,
-                    int *mtry,int *nsample,int *nvar) {
+void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, int *ntree, int *nrnodes, int *minsize, int *ldaughter, int *rdaughter,
+                    int *node_var, double *node_xvar, int *mtry,int *nsample,int *nvar) {
   
   int ndstart[*nrnodes];
   int ndend[*nrnodes];
   int ndind[*nsample];
+  int last_node = 0;
   ndstart[0] = 0;
   ndend[0] = *nsample;
   for(int i=0; i<*nsample; i++) ndind[i] = i;
   
-  //for(int i=0; i < *nrnodes; i++){
-    int i=0; // temporary for testing purposes
-    find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,ndstart[i],ndend[i],ndind);
-  //}
   
-  // create vector containing which node is whose left and whose right daughter
-  ldaughter[curr_tree] = curr_tree;
-  rdaughter[0] = 11;
+  int best_var, best_k;
+  double best_split;
   
+  for(int i=0; i < *nrnodes; i++){//*nrnodes; i++){
+    
+    if(last_node > *nrnodes-3 || i > last_node) break;
+    
+    if(ndend[last_node] - ndstart[last_node] <= (*minsize - 1)){
+      printf("nothing left to do \n");
+      continue;
+    }
+    //int i=0; // temporary for testing purposes
+    find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,ndstart[i],ndend[i],ndind, &best_var, &best_split, &best_k);
+    printf("Setting node_var[%d] to %d \t\t with a value of %f\n",i,best_var,best_split);
+    node_var[i] = best_var;
+    node_xvar[i] = best_split;
+    // saving these best entries
+    if(best_split != -1 & best_var != -1){
+      ndstart[last_node+1] = ndstart[last_node];
+      ndend[last_node+1] = best_k;
+      ndstart[last_node+2] = best_k+1;
+      ndend[last_node+2] = ndend[last_node]; 
+      ldaughter[i] = last_node + 1;
+      rdaughter[i] = last_node + 2;
+      last_node = last_node +2;
+    }
+    
+  }
+  
+
 }
 
 void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample , int *nvar, int *mtry, int *ntree, 
-                      int *nrnodes, int *ldaughter, int *rdaughter, int *node_status, int *node_var,
-                      int *node_xvar, double *dum_vect, int *dum_long, int *dum_ind) {
+                      int *nrnodes, int *minsize, int *ldaughter, int *rdaughter, int *node_status, int *node_var,
+                      double *node_xvar, double *dum_vect, int *dum_long, int *dum_ind) {
   
 
   GetRNGstate();
   
   double ran_num;
   
+  for(int i=0; i < *nrnodes; i++){
+    for(int j=0; j < *ntree; j++){
+      node_var[j * *nrnodes + i] = -1;
+    }
+  }
   double x_bag[*nsample * *nvar];
   double yc_bag[*nsample];
   int yf_bag[*nsample];
@@ -154,7 +196,7 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
     }
     
     // actual tree building
-    build_jcr_tree(x_bag,yc_bag,yf_bag,nclass,i,ntree,nrnodes,ldaughter+idx,rdaughter+idx,mtry,nsample,nvar);
+    build_jcr_tree(x_bag,yc_bag,yf_bag,nclass,i,ntree,nrnodes,minsize,ldaughter+idx,rdaughter+idx,node_var+idx,node_xvar+idx,mtry,nsample,nvar);
     
     // tree prediction
   }

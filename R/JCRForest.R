@@ -26,9 +26,10 @@ jcr_forest <- function(x,y,mtry,Ntree,minsize=5,bla=1:20){
   ## TO DO: make sure numbers are 1:nclass, otherwise C will be upset
   yf <- as.integer(y[,sapply(y,class) %in% c('factor')])
   
-  nrnodes <- 10
+  ## TODO: figure out how to calculate nrnodes properly...
+  nrnodes <- 2*floor(nrow(x)/minsize)+1
   nclass <- length(unique(yf))
-  cat(Ntree,"\n\n")
+  #cat(Ntree,"\n\n")
   # Forest building
   rfout <- .C("build_jcr_forest",
               x=x,
@@ -40,11 +41,12 @@ jcr_forest <- function(x,y,mtry,Ntree,minsize=5,bla=1:20){
               mtry=as.integer(mtry),
               ntree=as.integer(Ntree),
               nrnodes=as.integer(nrnodes),
+              minsize=as.integer(minsize),
               ldaughter=matrix(integer(nrnodes * Ntree),ncol=Ntree),
               rdaughter=matrix(integer(nrnodes * Ntree),ncol=Ntree),
               node_status=matrix(integer(nrnodes * Ntree),ncol=Ntree),
               node_var=matrix(integer(nrnodes * Ntree),ncol=Ntree),
-              node_xvar=matrix(integer(nrnodes * Ntree),ncol=Ntree),
+              node_xvar=matrix(numeric(nrnodes * Ntree),ncol=Ntree),
               dum_vect=as.numeric(bla),
               dum_long=as.integer(length(bla)),
               dum_ind=as.integer((1:length(bla))*2),

@@ -14,9 +14,12 @@ gt[output$dum_ind/2]
 
 output
 
-dat <- data_gen_inf(200,Nx=3)
+gt <- sample(100,20,replace=TRUE)
+dat <- data_gen_inf(20,Nx=3)
+tmp <- dat$x[,1]
+dat$x[,1] <- dat$x[,2]
+dat$x[,2] <- tmp
 output <- jcr_forest(dat$x,dat$y,3,10,bla=gt)
-
 # artif cut-off: 0.5
 H_c <- function(y){
   pb <- sum(y=='b')/length(y)
