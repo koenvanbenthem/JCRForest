@@ -52,5 +52,6 @@ jcr_forest <- function(x,y,mtry,Ntree,minsize=5,bla=1:20){
               dum_ind=as.integer((1:length(bla))*2),
               PACKAGE="JCRForest")
   
-  return(rfout)
+  return(structure(rfout,class="jcr_forest"))
 }
+

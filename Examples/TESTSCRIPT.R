@@ -20,6 +20,7 @@ tmp <- dat$x[,1]
 dat$x[,1] <- dat$x[,2]
 dat$x[,2] <- tmp
 output <- jcr_forest(dat$x,dat$y,3,10,bla=gt)
+predict(output,output$x)
 # artif cut-off: 0.5
 H_c <- function(y){
   pb <- sum(y=='b')/length(y)
@@ -35,6 +36,17 @@ for(thr in seq(0.1,0.9,0.05)){
 val <- (sum(dat$x[,1]>thr)/nrow(dat$x))*H_c(dat$y$y2[dat$x[,1]>thr]) + (sum(dat$x[,1]<=thr)/nrow(dat$x))*H_c(dat$y$y2[dat$x[,1]<=thr])
 cat(thr,"\t",val,"\n")
 }
+
+goat <- structure(list(x=7),class="jcr_forest")
+predict(goat)
+
+
+blabla <- c(5,6,1,4)
+order(blabla)
+blabla[order(blabla)]
+
+blabla[c(1,order(blabla[-1])+1)]
+
 # pb <- sum(dat$y$y2 == 'b')/nrow(dat$y)
 # pa <- 1-pb
 # pa *log(pa) + pb*log(pb)

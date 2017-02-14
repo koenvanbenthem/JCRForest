@@ -135,13 +135,13 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
     
     if(last_node > *nrnodes-3 || i > last_node) break;
     
-    if(ndend[last_node] - ndstart[last_node] <= (*minsize - 1)){
+    if(ndend[i] - ndstart[i] <= (*minsize - 1)){
       printf("nothing left to do \n");
       continue;
     }
     //int i=0; // temporary for testing purposes
     find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,ndstart[i],ndend[i],ndind, &best_var, &best_split, &best_k);
-    printf("Setting node_var[%d] to %d \t\t with a value of %f\n",i,best_var,best_split);
+    printf("[%d,%d]\t Setting node_var[%d] to %d \t\t with a value of %f\n",ndstart[i],ndend[i],i,best_var,best_split);
     node_var[i] = best_var;
     node_xvar[i] = best_split;
     // saving these best entries
