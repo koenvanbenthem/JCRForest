@@ -17,16 +17,16 @@ double H_c(int *counts, int *nclass, int N){
 }
 
 void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *nsample,int *nvar,
-                     int start, int end, int *ndind, int *best_var, double *best_split, int *best_k) {
+                     int start, int end, int *ndind, int *best_var, double *best_split, int *best_k, int *yf_predr, int *yf_predl) {
   
   // vector for variable indices - variables of choice are drawn from this vector
   int var_ind[*nvar];
   for(int i=0; i<*nvar;i++) var_ind[i] = i;
   int last = *nvar;
   
-  *best_var = 0;
-  *best_split = 0.0;
-  *best_k = 0;
+  *best_var = -1;
+  *best_split = -1.0;
+  *best_k = -1;
   
   // scoring variables
   double best_score = 0.0;
@@ -97,6 +97,8 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
         best_score = parent_score-curr_score;
         *best_var = var_ind[last];
         *best_k = k;
+        *yf_predl = which_max(pcxl,*nclass);
+        *yf_predr = which_max(pcxr,*nclass);
         
       }  
     }
@@ -117,7 +119,7 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
 }
 
 void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, int *ntree, int *nrnodes, int *minsize, int *ldaughter, int *rdaughter,
-                    int *node_var, double *node_xvar, int *mtry,int *nsample,int *nvar) {
+                    int *yf_pred, int *node_var, double *node_xvar, int *mtry,int *nsample,int *nvar) {
   
   int ndstart[*nrnodes];
   int ndend[*nrnodes];
@@ -128,7 +130,7 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
   for(int i=0; i<*nsample; i++) ndind[i] = i;
   
   
-  int best_var, best_k;
+  int best_var, best_k,yf_predr,yf_predl;
   double best_split;
   
   for(int i=0; i < *nrnodes; i++){//*nrnodes; i++){
@@ -136,23 +138,28 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
     if(last_node > *nrnodes-3 || i > last_node) break;
     
     if(ndend[i] - ndstart[i] <= (*minsize - 1)){
-      printf("nothing left to do \n");
+      printf("[%d,%d] nothing left to do \n",ndstart[i],ndend[i]);
       continue;
     }
+    yf_predr = -2;
+    yf_predl = -2;
     //int i=0; // temporary for testing purposes
-    find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,ndstart[i],ndend[i],ndind, &best_var, &best_split, &best_k);
+    find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,ndstart[i],ndend[i],ndind, &best_var, &best_split, &best_k, &yf_predr, &yf_predl);
     printf("[%d,%d]\t Setting node_var[%d] to %d \t\t with a value of %f\n",ndstart[i],ndend[i],i,best_var,best_split);
     node_var[i] = best_var;
     node_xvar[i] = best_split;
     // saving these best entries
-    if(best_split != -1 & best_var != -1){
+    if(best_split != -1 & best_var != -1.0){
       ndstart[last_node+1] = ndstart[last_node];
       ndend[last_node+1] = best_k;
       ndstart[last_node+2] = best_k+1;
       ndend[last_node+2] = ndend[last_node]; 
       ldaughter[i] = last_node + 1;
       rdaughter[i] = last_node + 2;
-      last_node = last_node +2;
+      
+      yf_pred[last_node+2] = yf_predr;
+      yf_pred[last_node+1] = yf_predl;
+      last_node = last_node + 2;
     }
     
   }
@@ -161,7 +168,7 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
 }
 
 void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample , int *nvar, int *mtry, int *ntree, 
-                      int *nrnodes, int *minsize, int *ldaughter, int *rdaughter, int *node_status, int *node_var,
+                      int *nrnodes, int *minsize, int *ldaughter, int *rdaughter, int *yf_pred, int *node_status, int *node_var,
                       double *node_xvar, double *dum_vect, int *dum_long, int *dum_ind) {
   
 
@@ -172,6 +179,7 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
   for(int i=0; i < *nrnodes; i++){
     for(int j=0; j < *ntree; j++){
       node_var[j * *nrnodes + i] = -1;
+      yf_pred[j * *nrnodes + i] = -1;
     }
   }
   double x_bag[*nsample * *nvar];
@@ -180,7 +188,7 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
   int ind;
   // Building the trees
   for(int i = 0; i < *ntree; i++){
-    
+    printf("A NEW TREE IS BORN\n-----------------------------------\n");
     int idx = i * *nrnodes; // coordinates for the specific tree 
     
     // data selection - only with replacement
@@ -196,7 +204,7 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
     }
     
     // actual tree building
-    build_jcr_tree(x_bag,yc_bag,yf_bag,nclass,i,ntree,nrnodes,minsize,ldaughter+idx,rdaughter+idx,node_var+idx,node_xvar+idx,mtry,nsample,nvar);
+    build_jcr_tree(x_bag,yc_bag,yf_bag,nclass,i,ntree,nrnodes,minsize,ldaughter+idx,rdaughter+idx,yf_pred+idx,node_var+idx,node_xvar+idx,mtry,nsample,nvar);
     
     // tree prediction
   }

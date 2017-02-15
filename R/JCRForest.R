@@ -44,6 +44,7 @@ jcr_forest <- function(x,y,mtry,Ntree,minsize=5,bla=1:20){
               minsize=as.integer(minsize),
               ldaughter=matrix(integer(nrnodes * Ntree),ncol=Ntree),
               rdaughter=matrix(integer(nrnodes * Ntree),ncol=Ntree),
+              yf_pred=matrix(integer(nrnodes * Ntree),ncol=Ntree),
               node_status=matrix(integer(nrnodes * Ntree),ncol=Ntree),
               node_var=matrix(integer(nrnodes * Ntree),ncol=Ntree),
               node_xvar=matrix(numeric(nrnodes * Ntree),ncol=Ntree),
