@@ -81,7 +81,7 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     
     int Nl = end-start;
     int Nr = 0;
-    for(int k=start; k<(end-1);k++){ // for each possible split
+    for(int k=start; k<(end-1); k++){ // for each possible split
       
       pcxl[yf[x_sort_ind[k]]-1]--;
       pcxr[yf[x_sort_ind[k]]-1]++;
@@ -150,16 +150,19 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
     node_xvar[i] = best_split;
     // saving these best entries
     if(best_split != -1 & best_var != -1.0){
-      ndstart[last_node+1] = ndstart[last_node];
-      ndend[last_node+1] = best_k;
+      //printf("[%d,%d] --> [%d,%d] u [%d,%d]",)
+      ndstart[last_node+1] = ndstart[i];
+      ndend[last_node+1] = best_k+1;
       ndstart[last_node+2] = best_k+1;
-      ndend[last_node+2] = ndend[last_node]; 
-      ldaughter[i] = last_node + 1;
-      rdaughter[i] = last_node + 2;
+      ndend[last_node+2] = ndend[i]; 
+      rdaughter[i] = last_node + 1;
+      ldaughter[i] = last_node + 2;
       
-      yf_pred[last_node+2] = yf_predr;
-      yf_pred[last_node+1] = yf_predl;
+      yf_pred[last_node+2] = yf_predl;
+      yf_pred[last_node+1] = yf_predr;
       last_node = last_node + 2;
+    }else{
+      printf("gnagna\n");
     }
     
   }

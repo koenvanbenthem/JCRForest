@@ -16,7 +16,7 @@ void forestpred(double *x, double *yc, int *yf, int *nclass, int *nsample, int *
         
         while(found == 0){
           
-          if(x[i + *nsample * node_var[curr_ind + *nrnodes * j]] < node_xvar[curr_ind + *nrnodes * j]){
+          if(x[i + *nsample * node_var[curr_ind + *nrnodes * j]] > node_xvar[curr_ind + *nrnodes * j]){
             curr_ind = ldaughter[curr_ind + j * *nrnodes];
             //printf("left%d\t\t",curr_ind);
           }else{

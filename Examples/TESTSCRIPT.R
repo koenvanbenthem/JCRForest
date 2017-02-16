@@ -25,6 +25,11 @@ pred_output <- predict(output,output$x)
 table(apply(pred_output$yf,2,which.max),output$yf)
 rbind(pred_output$yf,output$yf)
 
+## tree data
+dat <- data_gen_tree(2000)
+gt <- sample(100,20,replace=TRUE)
+output <- jcr_forest(dat$x,dat$y,3,10,bla=gt)
+table(apply(predict(output,output$x)$yf,2,which.max),dat$y$y2)
 # artif cut-off: 0.5
 H_c <- function(y){
   pb <- sum(y=='b')/length(y)
