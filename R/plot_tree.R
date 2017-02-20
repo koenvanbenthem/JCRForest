@@ -40,9 +40,8 @@ draw_jcr_tree <- function(forest,n){
     text(df2$x[i],-df2$y[i],df2$test[i])
 
     } else if(df2$y[i] != 0) {
-      text(df2$x[i],-df2$y[i],forest$yf_pred[i],col="green")
+      text(df2$x[i],-df2$y[i],paste(forest$yf_pred[i],forest$yc_mu_pred[i],sep="\n"),col="green",xpd=TRUE)
     }
   }
-  
-  return(df2)
+
 }

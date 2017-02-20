@@ -24,11 +24,11 @@ void forestpred(double *x, double *yc, int *yf, int *nclass, int *nsample, int *
             //printf("right%d\t\t",curr_ind);
           }
           //found=1;
-          printf("%d\t%d\t%d\t%d\n",curr_ind,j,*nrnodes,(curr_ind + j * *nrnodes));
+          //printf("%d\t%d\t%d\t%d\n",curr_ind,j,*nrnodes,(curr_ind + j * *nrnodes));
           if(ldaughter[curr_ind + j * *nrnodes] == 0){
             found = 1;
             yf[*nclass * i + yf_pred[curr_ind + j * *nrnodes]]++;
-            printf("in the loop\n");
+           // printf("in the loop\n");
           }
           
         }

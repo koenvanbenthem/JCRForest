@@ -1,35 +1,23 @@
-dat <- data_gen(20,Nx=3)
-dat$x[,1] <- sample(1:20)
-dat$x[,2] <- sample(21:40)
-dat$x[,3] <- sample(41:60)
-#dat$x[,4] <- sample(61:80)
-
-gt <- sample(100,20,replace=TRUE)
-output <- jcr_forest(dat$x,dat$y,3,10,bla=gt)
-
-output$dum_ind
-output$dum_vect
-gt
-gt[output$dum_ind/2]
-
-output
-
-gt <- sample(100,20,replace=TRUE)
-dat <- data_gen_inf(200,Nx=3)
-tmp <- dat$x[,1]
-dat$x[,1] <- dat$x[,2]
-dat$x[,2] <- tmp
-output <- jcr_forest(dat$x,dat$y,3,10,bla=gt)
-
-pred_output <- predict(output,output$x)
-table(apply(pred_output$yf,2,which.max),output$yf)
-rbind(pred_output$yf,output$yf)
-
 ## tree data
 dat <- data_gen_tree(2000)
 gt <- sample(100,20,replace=TRUE)
 output <- jcr_forest(dat$x,dat$y,3,10,bla=gt)
+
+
 table(apply(predict(output,output$x)$yf,2,which.max),dat$y$y2)
+t(tmp)[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
+output$x[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
+output$node_xvar
+draw_jcr_tree(output,2)
+
+
+
+
+
+
+
+
+
 # artif cut-off: 0.5
 H_c <- function(y){
   pb <- sum(y=='b')/length(y)
