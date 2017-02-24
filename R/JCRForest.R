@@ -53,6 +53,8 @@ jcr_forest <- function(x,y,mtry,Ntree,minsize=5,bla=1:20){
               dum_vect=as.numeric(bla),
               dum_long=as.integer(length(bla)),
               dum_ind=as.integer((1:length(bla))*2),
+              kappa= as.numeric(1),
+              nu = as.numeric(1),
               PACKAGE="JCRForest")
   
   return(structure(rfout,class="jcr_forest"))

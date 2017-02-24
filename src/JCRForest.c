@@ -83,6 +83,7 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     
     int Nl = end-start;
     int Nr = 0;
+    
     for(int k=start; k<(end-1); k++){ // for each possible split
       
       pcxl[yf[x_sort_ind[k]]-1]--;
@@ -149,6 +150,13 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
   int best_var, best_k,yf_predr,yf_predl;
   double best_split,yc_mu_predr,yc_mu_predl,yc_sd_predr,yc_sd_predl;
   
+  double y_mu_parent_c[*nclass * *nrnodes];
+  double y_sd_parent_c[*nclass * *nrnodes];
+  
+  y_mu_parent_c[0] = calc_mean(yc,*nsample);
+  double tmp = calc_mean(yc,*nsample);
+  y_sd_parent_c[0] = calc_sd(yc,y_mu_parent_c[0],*nsample);
+  printf("y mean %f or %f, sd %f\n",tmp,y_mu_parent_c[0],y_sd_parent_c[0]);
   for(int i=0; i < *nrnodes; i++){//*nrnodes; i++){
     
     if(last_node > *nrnodes-3 || i > last_node) break;
@@ -160,7 +168,9 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
     yf_predr = -2;
     yf_predl = -2;
     //int i=0; // temporary for testing purposes
-    find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,ndstart[i],ndend[i],ndind, &best_var, &best_split, &best_k, &yf_predr, &yf_predl,&yc_mu_predr,&yc_mu_predl,&yc_sd_predr,&yc_sd_predl,fp);
+    find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,ndstart[i],ndend[i],ndind, &best_var, 
+                    &best_split, &best_k, &yf_predr, &yf_predl,&yc_mu_predr,&yc_mu_predl,
+                    &yc_sd_predr,&yc_sd_predl,fp);
     
     node_var[i] = best_var;
     node_xvar[i] = best_split;
@@ -196,7 +206,7 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
 
 void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample , int *nvar, int *mtry, int *ntree, 
                       int *nrnodes, int *minsize, int *ldaughter, int *rdaughter, int *yf_pred, double *yc_mu_pred, double *yc_sd_pred, int *node_status, 
-                      int *node_var, double *node_xvar, double *dum_vect, int *dum_long, int *dum_ind) {
+                      int *node_var, double *node_xvar, double *dum_vect, int *dum_long, int *dum_ind, double *kappa,double *nu) {
   
 
   GetRNGstate();
