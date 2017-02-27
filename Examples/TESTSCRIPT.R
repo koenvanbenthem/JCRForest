@@ -10,8 +10,9 @@ output$x[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
 output$node_xvar
 draw_jcr_tree(output,2)
 
-
-
+dat2 <- dat$y[1:50,]
+aggregate(dat2$y1,by=list(dat2$y2),mean)
+aggregate(dat2$y1,by=list(dat2$y2),sd)
 
 
 

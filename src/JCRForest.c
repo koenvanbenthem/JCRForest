@@ -16,6 +16,10 @@ double H_c(int *counts, int *nclass, int N){
   return(score);
 }
 
+double H_rc(){
+  return 0.0;
+}
+
 void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *nsample,int *nvar,
                      int start, int end, int *ndind, int *best_var, double *best_split, int *best_k, int *yf_predr, int *yf_predl, 
                      double *yc_mu_predr, double *yc_mu_predl, double *yc_sd_predr, double *yc_sd_predl, FILE *fp) {
@@ -108,8 +112,8 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
         *yc_sd_predr = 1.25;
         *yc_sd_predl = 1.12; 
         
-        *yf_predl = which_max(pcxl,*nclass);
-        *yf_predr = which_max(pcxr,*nclass);
+        *yf_predl = which_max(pcxl,*nclass)+1;
+        *yf_predr = which_max(pcxr,*nclass)+1;
         
       }  
     }
@@ -249,7 +253,7 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
     
     // tree prediction
   }
-
+  
   fclose(fp);
   PutRNGstate(); 
   
