@@ -16,14 +16,22 @@ double H_c(int *counts, int *nclass, int N){
   return(score);
 }
 
-double H_rc(){
-  return 0.0;
+double H_rc(int *counts,double *sd, int *nclass, int N){
+  double score = 0;
+  
+  for(int i=0; i < *nclass; i++){
+    if(counts[i] > 0 & sd[i] > 0){
+      score += ((double) counts[i]) * 0.5*log(2.0*PI*exp(1)*sd[i])/((double) N); 
+    }
+  }
+  return score;
 }
 
-void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *nsample,int *nvar,
+void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *nsample,int *nvar, int *minsize, double H0_c, double H0_rc,
                      int start, int end, int *ndind, int *best_var, double *best_split, int *best_k, int *yf_predr, int *yf_predl, 
                      double *yc_mu_predr, double *yc_mu_predl, double *yc_sd_predr, double *yc_sd_predl, FILE *fp) {
   
+
   // vector for variable indices - variables of choice are drawn from this vector
   int var_ind[*nvar];
   for(int i=0; i<*nvar;i++) var_ind[i] = i;
@@ -34,7 +42,8 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   
   // scoring variables
   double best_score = 0.0;
-  double curr_score = 0.0;
+  double curr_score_disc = 0.0;
+  double curr_score_cont = 0.0;
   double parent_score = 0.0;
   
   // keeping track of the frequencies of different classes
@@ -42,6 +51,12 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   int pcx[*nclass];
   int pcxl[*nclass];
   int pcxr[*nclass];
+  
+  // Continuous variables
+  double meanl[*nclass];
+  double meanr[*nclass];
+  double sdl[*nclass];
+  double sdr[*nclass];
   
    // setting initial values (i.e. parent frequencies)
   for(int i=0; i < *nclass; i++) pcx[i] = 0;
@@ -56,7 +71,9 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   double yc_sorted[*nsample];
   int yf_sorted[*nsample];
 
-  parent_score = H_c(pcx,nclass,end-start);
+  calc_mean_class_I(yc,yf,nclass,start,end,x_sort_ind,meanr);
+  calc_sd_class_I(yc,yf,nclass,start,end,x_sort_ind,sdr,meanr);
+  parent_score = 0.5 * (H_c(pcx,nclass,end-start)/H0_c + H_rc(pcx,sdr,nclass,end-start)/H0_rc);
   
   for(int i=0; i < *mtry; i++){
 
@@ -88,32 +105,53 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     int Nl = end-start;
     int Nr = 0;
     
-    for(int k=start; k<(end-1); k++){ // for each possible split
+    for(int k=start; k < start+*minsize; k++){
+      pcxl[yf[x_sort_ind[k]]-1]--;
+      pcxr[yf[x_sort_ind[k]]-1]++;
+      Nr++;
+      Nl--;  
+    }
+    
+    for(int k=start+*minsize; k<(end-1-*minsize); k++){ // for each possible split
       
       pcxl[yf[x_sort_ind[k]]-1]--;
       pcxr[yf[x_sort_ind[k]]-1]++;
       Nr++;
       Nl--;
-      curr_score = ((double) Nr/((double) (end-start)))*H_c(pcxr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_c(pcxl,nclass,Nl);
-      double nvv = curr_score;
+      
+      calc_mean_class_I(yc,yf,nclass,start,k+1,x_sort_ind,meanr);
+      calc_sd_class_I(yc,yf,nclass,start,k+1,x_sort_ind,sdr,meanr);
+      
+      calc_mean_class_I(yc,yf,nclass,k+1,end,x_sort_ind,meanl);
+      calc_sd_class_I(yc,yf,nclass,k+1,end,x_sort_ind,sdl,meanl);
+      
+      curr_score_cont =  ((double) Nr/((double) (end-start)))*H_rc(pcxr,sdr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_rc(pcxl,sdl,nclass,Nl);
+      curr_score_disc = ((double) Nr/((double) (end-start)))*H_c(pcxr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_c(pcxl,nclass,Nl);
+      //printf("%f, %f \n\n",curr_score_cont,curr_score_disc);
+      double nvv = 0.5 * (curr_score_disc/H0_c + curr_score_cont/H0_rc);
       /*printf("(%d, %d)\t",pcxl[0],pcxl[1]);
       printf("(%d, %d)\t",pcxr[0],pcxr[1]);
       printf("%f \n",curr_score);*/
       //printf("pcxl1 = %d, pcxl2 = %d, pcxr1 = %d, pcxr2 = %d, Nr = %d, Nl = %d, k = %d, var = %d, the newest score is %f\n",pcxl[0],pcxl[1],pcxr[0],pcxr[1],Nr,Nl,k,var_ind[last],parent_score - nvv);
-      if(parent_score-curr_score > best_score){
-        best_score = parent_score-curr_score;
+      if(parent_score-nvv > best_score){
+        best_score = parent_score-nvv;
         *best_var = var_ind[last];
         *best_k = k;
         //printf("Bla");
-        
-        *yc_mu_predr = 9.5;
-        *yc_mu_predl = 1.8;
+        //print_array_int(pcxr,*nclass);
+        //print_array_double(meanr,*nclass);
+        *yc_mu_predr = weighted_average(meanr,pcxr,*nclass);
+        //printf("Leads to prediction %f\n",*yc_mu_predr);
+        *yc_mu_predl = weighted_average(meanl,pcxl,*nclass);
         
         *yc_sd_predr = 1.25;
         *yc_sd_predl = 1.12; 
         
         *yf_predl = which_max(pcxl,*nclass)+1;
         *yf_predr = which_max(pcxr,*nclass)+1;
+        if(*yf_predl < 0 || *yf_predr < 0){
+          printf("o,o");
+        }
         
       }  
     }
@@ -130,9 +168,7 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     fprintf(fp,"in if [%d,%d]\t%d\t%f %f (bestk) %d\n",start+1,end,*nsample,x_sort[start],x_sort[end-1],*best_k);
     fflush(fp);
     R_qsort_I(x_sort,ndind,start+1,end);
-    /*if(*best_k >= end){
-      printf("Quoi");
-    }*/
+
     *best_split = 0.5*x_sort[*best_k]+0.5*x_sort[*best_k+1];
   }
   //printf("[%d,%d] Best variable is... %d with a score of %f (ps=%f)\n",start,end,best_var,best_score,parent_score);
@@ -158,21 +194,32 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
   double y_sd_parent_c[*nclass * *nrnodes];
   
   y_mu_parent_c[0] = calc_mean(yc,*nsample);
-  double tmp = calc_mean(yc,*nsample);
   y_sd_parent_c[0] = calc_sd(yc,y_mu_parent_c[0],*nsample);
-  printf("y mean %f or %f, sd %f\n",tmp,y_mu_parent_c[0],y_sd_parent_c[0]);
+  
+  double mean[*nclass];
+  double sd[*nclass];
+  calc_mean_class(yc,yf,nclass,*nsample,mean);
+  calc_sd_class(yc,yf,nclass,*nsample,sd,mean);
+
+  int pcx[*nclass];
+  for(int i=0; i < *nclass; i++) pcx[i] = 0;
+  for(int i=0; i < *nsample; i++) pcx[yf[ndind[i]]-1]++;
+  
+  double H0_c = H_c(pcx,nclass,*nsample);
+  double H0_rc = H_rc(pcx,sd,nclass,*nsample);
+  
   for(int i=0; i < *nrnodes; i++){//*nrnodes; i++){
     
     if(last_node > *nrnodes-3 || i > last_node) break;
     
-    if(ndend[i] - ndstart[i] <= (*minsize - 1)){
+    if(ndend[i] - ndstart[i] <= (*minsize - 1)/2){
       //printf("[%d,%d] nothing left to do \n",ndstart[i],ndend[i]);
       continue;
     }
     yf_predr = -2;
     yf_predl = -2;
     //int i=0; // temporary for testing purposes
-    find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,ndstart[i],ndend[i],ndind, &best_var, 
+    find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,minsize,H0_c,H0_rc,ndstart[i],ndend[i],ndind, &best_var, 
                     &best_split, &best_k, &yf_predr, &yf_predl,&yc_mu_predr,&yc_mu_predl,
                     &yc_sd_predr,&yc_sd_predl,fp);
     

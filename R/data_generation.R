@@ -26,14 +26,15 @@ data_gen_inf <- function(N,Nx=3){
 }
 
 data_gen_tree <- function(N,Ne=0){
-  x <- matrix(runif(N*(3+Ne)),ncol=3+Ne)
+  x <- matrix(runif(N*(4+Ne)),ncol=4+Ne)
   yf <- character(N)
   yf[x[,1] < 0.5 & x[,2] >= 0.4] <- 'a'
   yf[x[,1] < 0.5 & x[,2] < 0.4] <- 'b'
   yf[x[,1] >= 0.5 & x[,3] < 0.7] <- 'c'
   yf[x[,1] >= 0.5 & x[,3] >= 0.7 & x[,2] < 0.7] <- 'd'
   yf[x[,1] >= 0.5 & x[,3] >= 0.7 & x[,2] >= 0.7] <- 'e'
-  y <- data.frame(y1=runif(N),y2=factor(yf))
+  yc <- as.numeric(x[,4] >= 0.4)*3+1
+  y <- data.frame(y1=yc,y2=factor(yf))
   
   return(list(x=x,y=y))
 }

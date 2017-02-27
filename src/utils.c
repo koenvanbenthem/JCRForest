@@ -43,12 +43,15 @@ void calc_mean_class(double *vector, int *class_vector, int *nclass, int nsample
   }
   
   for(int i=0; i<*nclass; i++){
-    store[i] = store[i] / ((double) size[i]);
+    if(size[i] > 0){
+      store[i] = store[i] / ((double) size[i]);
+    }
   }
 }
 
 void calc_mean_class_I(double *vector, int *class_vector, int *nclass, int start, int end, int *ndind, double *store){
   int size[*nclass];
+  
   for(int i=0; i<*nclass; i++){
     store[i] = 0;
     size[i] = 0;
@@ -60,7 +63,9 @@ void calc_mean_class_I(double *vector, int *class_vector, int *nclass, int start
   }
   
   for(int i=0; i < *nclass; i++){
+    if(size[i] > 0){
     store[i] = store[i]/((double) size[i]);
+    }
   }
   
 }
@@ -117,4 +122,31 @@ void calc_sd_class_I(double *vector, int *class_vector, int *nclass, int start, 
       store[i] = 0;
     }
   }
+}
+
+double weighted_average(double *vector, int *weights, int size){
+  int sum = 0;
+  double result = 0;
+  for(int i=0; i<size; i++){
+    sum += weights[i];
+    result += vector[i] * weights[i];
+  }
+  result /= ((double) sum);
+  
+  return result;
+}
+
+void print_array_int(int *vector, int size){
+  for(int i = 0; i < size; i++){
+    printf("%d\t",vector[i]);
+  }
+  printf("\n");
+}
+
+
+void print_array_double(double *vector, int size){
+  for(int i = 0; i < size; i++){
+    printf("%.2f\t",vector[i]);
+  }
+  printf("\n");
 }

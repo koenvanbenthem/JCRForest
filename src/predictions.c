@@ -1,6 +1,6 @@
 // code
 
-void forestpred(double *x, double *yc, int *yf, int *nclass, int *nsample, int *ldaughter, int *rdaughter, int *yf_pred, int *ntree, int *nrnodes, 
+void forestpred(double *x, double *yc, int *yf, int *nclass, int *nsample, int *ldaughter, int *rdaughter, int *yf_pred, double *yc_pred, int *ntree, int *nrnodes, 
                 int *node_var, double *node_xvar){
     
 
@@ -27,7 +27,8 @@ void forestpred(double *x, double *yc, int *yf, int *nclass, int *nsample, int *
           //printf("%d\t%d\t%d\t%d\n",curr_ind,j,*nrnodes,(curr_ind + j * *nrnodes));
           if(ldaughter[curr_ind + j * *nrnodes] == 0){
             found = 1;
-            yf[*nclass * i + yf_pred[curr_ind + j * *nrnodes]]++;
+            yf[*nclass * i + yf_pred[curr_ind + j * *nrnodes]-1]++;
+            yc[i] += yc_pred[curr_ind + j * *nrnodes] / ((double) *ntree);
            // printf("in the loop\n");
           }
           

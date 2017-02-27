@@ -12,6 +12,7 @@ predict.jcr_forest <- function(forest,newdata){
                  ldaughter=forest$ldaughter,
                  rdaughter=forest$rdaughter,
                  yf_pred=forest$yf_pred,
+                 yc_pred=forest$yc_mu_pred,
                  ntree = as.integer(forest$ntree),
                  nrnodes = as.integer(forest$nrnodes),
                  node_var = forest$node_var,

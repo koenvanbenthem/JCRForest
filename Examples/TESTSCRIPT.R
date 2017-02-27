@@ -1,15 +1,20 @@
 ## tree data
 dat <- data_gen_tree(200)
 gt <- sample(100,20,replace=TRUE)
-output <- jcr_forest(dat$x,dat$y,3,10,bla=gt)
+output <- jcr_forest(dat$x,dat$y,2,10,bla=gt)
 
 
 table(apply(predict(output,output$x)$yf,2,which.max),dat$y$y2)
+
 t(tmp)[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
 output$x[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
 output$node_xvar
 draw_jcr_tree(output,2)
+bla <- rbind(1:nrow(output$yf_pred),output$yf_pred[,2],output$ldaughter[,2]+1,output$rdaughter[,2]+1,1:nrow(output$yf_pred))
+t(bla)
 
+plot(dat$y$y1,predict(output,dat$x)$yc)
+output$ldaughter
 dat2 <- dat$y[1:50,]
 aggregate(dat2$y1,by=list(dat2$y2),mean)
 aggregate(dat2$y1,by=list(dat2$y2),sd)
