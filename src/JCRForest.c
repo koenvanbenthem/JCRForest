@@ -68,8 +68,8 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   int x_sort_ind[*nsample];
   for(int i=start; i<end; i++) x_sort_ind[i] = ndind[i];
   
-  double yc_sorted[*nsample];
-  int yf_sorted[*nsample];
+  //double yc_sorted[*nsample];
+  //int yf_sorted[*nsample];
 
   calc_mean_class_I(yc,yf,nclass,start,end,x_sort_ind,meanr);
   calc_sd_class_I(yc,yf,nclass,start,end,x_sort_ind,sdr,meanr);
