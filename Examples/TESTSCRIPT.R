@@ -1,7 +1,7 @@
 ## tree data
 dat <- data_gen_tree(200)
 gt <- sample(100,20,replace=TRUE)
-output <- jcr_forest(dat$x,dat$y,2,10,bla=gt)
+output <- jcr_forest(dat$x,dat$y,4,10,bla=gt)
 
 
 table(apply(predict(output,output$x)$yf,2,which.max),dat$y$y2)
