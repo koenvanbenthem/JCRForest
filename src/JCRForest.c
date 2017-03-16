@@ -29,7 +29,7 @@ double H_rc(int *counts,double *sd, int *nclass, int N){
 
 void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *nsample,int *nvar, int *minsize, double H0_c, double H0_rc,
                      int start, int end, int *ndind, int *best_var, double *best_split, int *best_k, int *yf_predr, int *yf_predl, 
-                     double *yc_mu_predr, double *yc_mu_predl, double *yc_sd_predr, double *yc_sd_predl, FILE *fp) {
+                     double *yc_mu_predr, double *yc_mu_predl, double *yc_sd_predr, double *yc_sd_predl, FILE *fp, double *kappa, double *nu) {
   
 
   // vector for variable indices - variables of choice are drawn from this vector
@@ -176,7 +176,7 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
 }
 
 void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, int *ntree, int *nrnodes, int *minsize, int *ldaughter, int *rdaughter,
-                    int *yf_pred, double *yc_mu_pred, double *yc_sd_pred, int *node_var, double *node_xvar, int *mtry,int *nsample,int *nvar, FILE *fp) {
+                    int *yf_pred, double *yc_mu_pred, double *yc_sd_pred, int *node_var, double *node_xvar, int *mtry,int *nsample,int *nvar, FILE *fp,double *kappa, double *nu) {
   
   int ndstart[*nrnodes];
   int ndend[*nrnodes];
@@ -221,7 +221,7 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
     //int i=0; // temporary for testing purposes
     find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,minsize,H0_c,H0_rc,ndstart[i],ndend[i],ndind, &best_var, 
                     &best_split, &best_k, &yf_predr, &yf_predl,&yc_mu_predr,&yc_mu_predl,
-                    &yc_sd_predr,&yc_sd_predl,fp);
+                    &yc_sd_predr,&yc_sd_predl,fp,kappa,nu);
     
     node_var[i] = best_var;
     node_xvar[i] = best_split;
@@ -296,7 +296,7 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
     }
     
     // actual tree building
-    build_jcr_tree(x_bag,yc_bag,yf_bag,nclass,i,ntree,nrnodes,minsize,ldaughter+idx,rdaughter+idx,yf_pred+idx,yc_mu_pred+idx,yc_sd_pred+idx,node_var+idx,node_xvar+idx,mtry,nsample,nvar,fp);
+    build_jcr_tree(x_bag,yc_bag,yf_bag,nclass,i,ntree,nrnodes,minsize,ldaughter+idx,rdaughter+idx,yf_pred+idx,yc_mu_pred+idx,yc_sd_pred+idx,node_var+idx,node_xvar+idx,mtry,nsample,nvar,fp,kappa,nu);
     
     // tree prediction
   }
