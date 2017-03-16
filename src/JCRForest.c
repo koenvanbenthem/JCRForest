@@ -168,6 +168,12 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
         //printf("Bla");
         //print_array_int(pcxr,*nclass);
         //print_array_double(meanr,*nclass);
+        
+        // Assign parent robust mean and sd here
+        //
+        //
+        //
+        
         *yc_mu_predr = weighted_average(meanr,pcxr,*nclass);
         //printf("Leads to prediction %f\n",*yc_mu_predr);
         *yc_mu_predl = weighted_average(meanl,pcxl,*nclass);
