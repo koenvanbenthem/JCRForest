@@ -5,11 +5,12 @@ output <- jcr_forest(dat$x,dat$y,4,10,bla=gt)
 
 
 table(apply(predict(output,output$x)$yf,2,which.max),dat$y$y2)
+plot(predict(output,output$x)$yc,dat$y$y1)
 
 t(tmp)[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
 output$x[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
 output$node_xvar
-draw_jcr_tree(output,2)
+draw_jcr_tree(output,4)
 bla <- rbind(1:nrow(output$yf_pred),output$yf_pred[,2],output$ldaughter[,2]+1,output$rdaughter[,2]+1,1:nrow(output$yf_pred))
 t(bla)
 
