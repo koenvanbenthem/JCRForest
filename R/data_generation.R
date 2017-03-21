@@ -33,7 +33,7 @@ data_gen_tree <- function(N,Ne=0){
   yf[x[,1] >= 0.5 & x[,3] < 0.7] <- 'c'
   yf[x[,1] >= 0.5 & x[,3] >= 0.7 & x[,2] < 0.5] <- 'd'
   yf[x[,1] >= 0.5 & x[,3] >= 0.7 & x[,2] >= 0.5] <- 'e'
-  yc <- rnorm(N,as.numeric(x[,4] >= 0.4)*3+1,1)
+  yc <- rnorm(N,as.numeric(x[,4] >= 0.4)*3+1,0.1)
   y <- data.frame(y1=yc,y2=factor(yf))
   
   return(list(x=x,y=y))

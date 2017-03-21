@@ -154,7 +154,7 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
       
       calc_mean_class_I(yc,yf,nclass,k+1,end,x_sort_ind,meanl);
       calc_sd_class_I(yc,yf,nclass,k+1,end,x_sort_ind,sdl,meanl);
-      double n = 2;
+      double n = 1;
       if(pid!=-1){
 
         //void robust_mean(int N, double kappa, int nclass, double *mean_child, double *mean_parent, double *store){
