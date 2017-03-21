@@ -1,5 +1,5 @@
 ## tree data
-dat <- data_gen_tree(200)
+dat <- data_gen_tree(2000)
 gt <- sample(100,20,replace=TRUE)
 output <- jcr_forest(dat$x,dat$y,4,10,bla=gt)
 

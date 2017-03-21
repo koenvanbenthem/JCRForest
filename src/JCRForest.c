@@ -27,21 +27,22 @@ double H_rc(int *counts,double *sd, int *nclass, int N){
   return score;
 }
 
-void robust_mean(int N, double kappa, int nclass, double *mean_child, double *mean_parent, double *store){
+void robust_mean(int *N, double kappa, int nclass, double *mean_child, double *mean_parent, double *store){
   for(int i=0; i<nclass; i++){
-    store[i] = ((double) N / (kappa + (double) N)) * mean_child[i] + (kappa/(kappa + (double) N)) * mean_parent[i];
+    store[i] = ((double) N[i] / (kappa + (double) N[i])) * mean_child[i] + (kappa/(kappa + (double) N[i])) * mean_parent[i];
   }
 }
 
-void robust_sd(int N, double kappa, double nu, double n, int nclass, double *sd_child, double *sd_parent,double *store, double *mean_child, double *mean_parent){
-  double Z = nu + n - 1 + N;
+void robust_sd(int *N, double kappa, double nu, double n, int nclass, double *sd_child, double *sd_parent,double *store, double *mean_child, double *mean_parent){
+
   //printf("\n\n%f\n\n",kappa);
   //print_array_double(sd_parent,nclass);
   //print_array_double(sd_child,nclass);
   //print_array_double(mean_child,nclass);
   //print_array_double(mean_parent,nclass);
   for(int i=0; i<nclass; i++){
-    store[i] = ((double) N / Z) * sd_child[i] + (nu+n-1)/Z * sd_parent[i] + (kappa * (double) N) / (Z * (kappa + N)) * pow(mean_parent[i] - mean_child[i],2.0);
+    double Z = nu + n - 1 + N[i];
+    store[i] = ((double) N[i] / Z) * sd_child[i] + (nu+n-1)/Z * sd_parent[i] + (kappa * (double) N[i]) / (Z * (kappa + N[i])) * pow(mean_parent[i] - mean_child[i],2.0);
   }
 }
 
@@ -157,11 +158,11 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
       if(pid!=-1){
 
         //void robust_mean(int N, double kappa, int nclass, double *mean_child, double *mean_parent, double *store){
-        robust_mean(Nl,*kappa,*nclass,meanl,y_mu_c+(pid* *nclass),real_meanl);
-        robust_mean(Nr,*kappa,*nclass,meanr,y_mu_c+(pid* *nclass),real_meanr);
+        robust_mean(pcxl,*kappa,*nclass,meanl,y_mu_c+(pid* *nclass),real_meanl);
+        robust_mean(pcxr,*kappa,*nclass,meanr,y_mu_c+(pid* *nclass),real_meanr);
         // void robust_sd(int N, double kappa, double nu, double n, int nclass, double *sd_child, double *sd_parent,double *store, double *mean_child, double *mean_parent){
-        robust_sd(Nl,*kappa,*nu,n,*nclass,sdl,y_sd_c+(pid * *nclass),real_sdl,meanl,y_mu_c+(pid* *nclass));
-        robust_sd(Nr,*kappa,*nu,n,*nclass,sdr,y_sd_c+(pid * *nclass),real_sdr,meanr,y_mu_c+(pid* *nclass));
+        robust_sd(pcxl,*kappa,*nu,n,*nclass,sdl,y_sd_c+(pid * *nclass),real_sdl,meanl,y_mu_c+(pid* *nclass));
+        robust_sd(pcxr,*kappa,*nu,n,*nclass,sdr,y_sd_c+(pid * *nclass),real_sdr,meanr,y_mu_c+(pid* *nclass));
         
         //print_array_double(real_sdr,*nclass);
         //print_array_double(sdr,*nclass);
