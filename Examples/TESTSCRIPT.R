@@ -1,11 +1,12 @@
 ## tree data
-dat <- data_gen_tree(2000)
+dat <- data_gen_tree(200)
 gt <- sample(100,20,replace=TRUE)
 output <- jcr_forest(dat$x,dat$y,4,10,bla=gt)
 
 
 table(apply(predict(output,output$x)$yf,2,which.max),dat$y$y2)
 plot(predict(output,output$x)$yc,dat$y$y1)
+predict(output,matrix(c(0.9,0.5,0.7,0.5),nrow=1))$yf
 
 t(tmp)[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
 output$x[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
