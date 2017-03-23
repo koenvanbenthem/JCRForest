@@ -4,13 +4,15 @@ arrows_label <- function(x1,y1,x2,y2,lbl,...){
 }
 
 draw_jcr_tree <- function(forest,n){
+
   left <- forest$ldaughter[,n] + 1
   right <- forest$rdaughter[,n] + 1
   vars <- forest$node_var[,n] + 1
   thrs <- forest$node_xvar[,n]
   tst <- paste(vars,round(thrs,2),sep = " ? ")
   df <- data.frame(test=tst,left=left,right=right,parent=NA,x=0,y=0)
-  df2 <- df[1:(nrow(df)+1-min(which(rev(df$test) != "0 ? 0.0"))),]
+  #df2 <- df[1:(nrow(df)+1-min(which(rev(df$test) != "0 ? 0"))),]
+  df2 <- df[1:max(left),]
   
   for(i in 1:nrow(df2)){
     if(df2$left[i] != 1){
@@ -40,7 +42,7 @@ draw_jcr_tree <- function(forest,n){
     text(df2$x[i],-df2$y[i],df2$test[i])
 
     } else if(df2$y[i] != 0) {
-      text(df2$x[i],-df2$y[i],paste(forest$yf_pred[i],round(forest$yc_mu_pred[i],1),sep="\n"),col="green",xpd=TRUE)
+      text(df2$x[i],-df2$y[i],paste(forest$yf_pred[i,n],round(forest$yc_mu_pred[i,n],1),sep="\n"),col="green",xpd=TRUE)
     }
   }
 

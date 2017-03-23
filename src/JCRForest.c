@@ -276,8 +276,6 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
       memcpy(y_sd_c+((last_node+1) * *nclass),best_sdr,*nclass * sizeof(double));
       memcpy(y_mu_c+((last_node+2) * *nclass),best_meanl,*nclass * sizeof(double));
       memcpy(y_sd_c+((last_node+2) * *nclass),best_sdl,*nclass * sizeof(double));
-      print_array_double(best_sdl,*nclass);
-      print_array_double(y_sd_c+((last_node+2)* *nclass),*nclass);
       
       parent_id[last_node+1] = i;
       parent_id[last_node+2] = i;

@@ -1,17 +1,18 @@
 ## tree data
-dat <- data_gen_tree(200)
+dat <- data_gen_tree(2000)
 gt <- sample(100,20,replace=TRUE)
 output <- jcr_forest(dat$x,dat$y,4,10,bla=gt)
 
 
 table(apply(predict(output,output$x)$yf,2,which.max),dat$y$y2)
 plot(predict(output,output$x)$yc,dat$y$y1)
-predict(output,matrix(c(0.9,0.5,0.7,0.5),nrow=1))$yf
+predict(output,matrix(c(0.1,0.9,0.27,0.45),nrow=1))$yf
+draw_jcr_tree(output,4)
 
 t(tmp)[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
 output$x[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
 output$node_xvar
-draw_jcr_tree(output,4)
+#draw_jcr_tree(output,)
 bla <- rbind(1:nrow(output$yf_pred),output$yf_pred[,2],output$ldaughter[,2]+1,output$rdaughter[,2]+1,1:nrow(output$yf_pred))
 t(bla)
 

@@ -10,7 +10,6 @@ void forestpred(double *x, double *yc, int *yf, int *nclass, int *nsample, int *
       for(int k=0; k < *nclass; k++){ yf_p[k]=0; }
       
       for(int j=0; j < *ntree; j++){
-        
         int found = 0;
         int curr_ind = 0;
         
