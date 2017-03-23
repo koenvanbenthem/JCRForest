@@ -27,9 +27,29 @@ double H_rc(int *counts,double *sd, int *nclass, int N){
   return score;
 }
 
+void robust_mean(int *N, double kappa, int nclass, double *mean_child, double *mean_parent, double *store){
+  for(int i=0; i<nclass; i++){
+    store[i] = ((double) N[i] / (kappa + (double) N[i])) * mean_child[i] + (kappa/(kappa + (double) N[i])) * mean_parent[i];
+  }
+}
+
+void robust_sd(int *N, double kappa, double nu, double n, int nclass, double *sd_child, double *sd_parent,double *store, double *mean_child, double *mean_parent){
+
+  //printf("\n\n%f\n\n",kappa);
+  //print_array_double(sd_parent,nclass);
+  //print_array_double(sd_child,nclass);
+  //print_array_double(mean_child,nclass);
+  //print_array_double(mean_parent,nclass);
+  for(int i=0; i<nclass; i++){
+    double Z = nu + n - 1 + N[i];
+    store[i] = ((double) N[i] / Z) * sd_child[i] + (nu+n-1)/Z * sd_parent[i] + (kappa * (double) N[i]) / (Z * (kappa + N[i])) * pow(mean_parent[i] - mean_child[i],2.0);
+  }
+}
+
 void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *nsample,int *nvar, int *minsize, double H0_c, double H0_rc,
                      int start, int end, int *ndind, int *best_var, double *best_split, int *best_k, int *yf_predr, int *yf_predl, 
-                     double *yc_mu_predr, double *yc_mu_predl, double *yc_sd_predr, double *yc_sd_predl, FILE *fp, double *kappa, double *nu) {
+                     double *yc_mu_predr, double *yc_mu_predl, double *yc_sd_predr, double *yc_sd_predl, FILE *fp, double *kappa, double *nu,
+                     double *y_mu_c,double *y_sd_c,int pid, double *best_meanl, double *best_meanr, double *best_sdl, double *best_sdr) {
   
 
   // vector for variable indices - variables of choice are drawn from this vector
@@ -58,6 +78,11 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   double sdl[*nclass];
   double sdr[*nclass];
   
+  double real_meanl[*nclass];
+  double real_meanr[*nclass];
+  double real_sdl[*nclass];
+  double real_sdr[*nclass];
+  
    // setting initial values (i.e. parent frequencies)
   for(int i=0; i < *nclass; i++) pcx[i] = 0;
   for(int i=start; i < end; i++) pcx[yf[ndind[i]]-1]++;
@@ -70,11 +95,15 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   
   //double yc_sorted[*nsample];
   //int yf_sorted[*nsample];
-
-  calc_mean_class_I(yc,yf,nclass,start,end,x_sort_ind,meanr);
-  calc_sd_class_I(yc,yf,nclass,start,end,x_sort_ind,sdr,meanr);
-  parent_score = 0.5 * (H_c(pcx,nclass,end-start)/H0_c + H_rc(pcx,sdr,nclass,end-start)/H0_rc);
-  
+  if(pid==-1){
+    calc_mean_class_I(yc,yf,nclass,start,end,x_sort_ind,meanr);
+    calc_sd_class_I(yc,yf,nclass,start,end,x_sort_ind,sdr,meanr);
+    parent_score = 0.5 * (H_c(pcx,nclass,end-start)/H0_c + H_rc(pcx,sdr,nclass,end-start)/H0_rc);
+  } else {
+    parent_score = 0.5 * (H_c(pcx,nclass,end-start)/H0_c + H_rc(pcx,y_sd_c+pid*(*nclass),nclass,end-start)/H0_rc);
+    //print_array_double(y_sd_c+(pid*(*nclass)),*nclass);
+  }
+  pid = -1;
   for(int i=0; i < *mtry; i++){
 
     // select variable
@@ -119,30 +148,58 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
       Nr++;
       Nl--;
       
+      // make robust
       calc_mean_class_I(yc,yf,nclass,start,k+1,x_sort_ind,meanr);
       calc_sd_class_I(yc,yf,nclass,start,k+1,x_sort_ind,sdr,meanr);
       
       calc_mean_class_I(yc,yf,nclass,k+1,end,x_sort_ind,meanl);
       calc_sd_class_I(yc,yf,nclass,k+1,end,x_sort_ind,sdl,meanl);
-      
-      curr_score_cont =  ((double) Nr/((double) (end-start)))*H_rc(pcxr,sdr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_rc(pcxl,sdl,nclass,Nl);
+      double n = 1;
+      if(pid!=-1){
+
+        //void robust_mean(int N, double kappa, int nclass, double *mean_child, double *mean_parent, double *store){
+        robust_mean(pcxl,*kappa,*nclass,meanl,y_mu_c+(pid* *nclass),real_meanl);
+        robust_mean(pcxr,*kappa,*nclass,meanr,y_mu_c+(pid* *nclass),real_meanr);
+        // void robust_sd(int N, double kappa, double nu, double n, int nclass, double *sd_child, double *sd_parent,double *store, double *mean_child, double *mean_parent){
+        robust_sd(pcxl,*kappa,*nu,n,*nclass,sdl,y_sd_c+(pid * *nclass),real_sdl,meanl,y_mu_c+(pid* *nclass));
+        robust_sd(pcxr,*kappa,*nu,n,*nclass,sdr,y_sd_c+(pid * *nclass),real_sdr,meanr,y_mu_c+(pid* *nclass));
+        
+        //print_array_double(real_sdr,*nclass);
+        //print_array_double(sdr,*nclass);
+        
+      } else {
+        memcpy(real_sdr,sdr,*nclass * sizeof(double));
+        memcpy(real_sdl,sdl,*nclass * sizeof(double));
+        memcpy(real_meanl,meanl,*nclass * sizeof(double));
+        memcpy(real_meanr,meanr,*nclass * sizeof(double));
+      }
+      curr_score_cont =  ((double) Nr/((double) (end-start)))*H_rc(pcxr,real_sdr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_rc(pcxl,real_sdl,nclass,Nl);
       curr_score_disc = ((double) Nr/((double) (end-start)))*H_c(pcxr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_c(pcxl,nclass,Nl);
       //printf("%f, %f \n\n",curr_score_cont,curr_score_disc);
       double nvv = 0.5 * (curr_score_disc/H0_c + curr_score_cont/H0_rc);
       /*printf("(%d, %d)\t",pcxl[0],pcxl[1]);
-      printf("(%d, %d)\t",pcxr[0],pcxr[1]);
-      printf("%f \n",curr_score);*/
+      //printf("(%d, %d)\t",pcxr[0],pcxr[1]);
+      //printf("%f \n",curr_score);*/
       //printf("pcxl1 = %d, pcxl2 = %d, pcxr1 = %d, pcxr2 = %d, Nr = %d, Nl = %d, k = %d, var = %d, the newest score is %f\n",pcxl[0],pcxl[1],pcxr[0],pcxr[1],Nr,Nl,k,var_ind[last],parent_score - nvv);
       if(parent_score-nvv > best_score){
+        //printf("joechei!");
         best_score = parent_score-nvv;
         *best_var = var_ind[last];
         *best_k = k;
         //printf("Bla");
         //print_array_int(pcxr,*nclass);
         //print_array_double(meanr,*nclass);
-        *yc_mu_predr = weighted_average(meanr,pcxr,*nclass);
+        
+        // Assign parent robust mean and sd here
+        memcpy(best_meanl,real_meanl,*nclass * sizeof(double));
+        memcpy(best_meanr,real_meanr,*nclass * sizeof(double));
+        memcpy(best_sdl,real_sdl,*nclass * sizeof(double));
+        memcpy(best_sdr,real_sdr,*nclass * sizeof(double));
+        
+        
+        *yc_mu_predr = weighted_average(real_meanr,pcxr,*nclass);
         //printf("Leads to prediction %f\n",*yc_mu_predr);
-        *yc_mu_predl = weighted_average(meanl,pcxl,*nclass);
+        *yc_mu_predl = weighted_average(real_meanl,pcxl,*nclass);
         
         *yc_sd_predr = 1.25;
         *yc_sd_predl = 1.12; 
@@ -182,31 +239,34 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
   int ndend[*nrnodes];
   int ndind[*nsample];
   int last_node = 0;
+  int parent_id[*nrnodes];
+  for(int i=0; i<*nrnodes;i++) parent_id[i] = -1;
   ndstart[0] = 0;
   ndend[0] = *nsample;
   for(int i=0; i<*nsample; i++) ndind[i] = i;
   
-  
   int best_var, best_k,yf_predr,yf_predl;
   double best_split,yc_mu_predr,yc_mu_predl,yc_sd_predr,yc_sd_predl;
   
-  double y_mu_parent_c[*nclass * *nrnodes];
-  double y_sd_parent_c[*nclass * *nrnodes];
+  double y_mu_c[*nclass * *nrnodes];
+  double y_sd_c[*nclass * *nrnodes];
+  // void calc_sd_class(double *vector, int *class_vector, int *nclass, int nsample, double *store, double *mean){
+  //void calc_mean_class(double *vector, int *class_vector, int *nclass, int nsample,double *store)
   
-  y_mu_parent_c[0] = calc_mean(yc,*nsample);
-  y_sd_parent_c[0] = calc_sd(yc,y_mu_parent_c[0],*nsample);
-  
-  double mean[*nclass];
-  double sd[*nclass];
-  calc_mean_class(yc,yf,nclass,*nsample,mean);
-  calc_sd_class(yc,yf,nclass,*nsample,sd,mean);
+  calc_mean_class(yc,yf,nclass,*nsample,y_mu_c);
+  calc_sd_class(yc,yf,nclass,*nsample,y_sd_c,y_mu_c);
 
   int pcx[*nclass];
   for(int i=0; i < *nclass; i++) pcx[i] = 0;
   for(int i=0; i < *nsample; i++) pcx[yf[ndind[i]]-1]++;
   
   double H0_c = H_c(pcx,nclass,*nsample);
-  double H0_rc = H_rc(pcx,sd,nclass,*nsample);
+  double H0_rc = H_rc(pcx,y_sd_c,nclass,*nsample);
+  
+  double best_meanl[*nclass];
+  double best_meanr[*nclass];
+  double best_sdl[*nclass];
+  double best_sdr[*nclass];
   
   for(int i=0; i < *nrnodes; i++){//*nrnodes; i++){
     
@@ -221,12 +281,16 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
     //int i=0; // temporary for testing purposes
     find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,minsize,H0_c,H0_rc,ndstart[i],ndend[i],ndind, &best_var, 
                     &best_split, &best_k, &yf_predr, &yf_predl,&yc_mu_predr,&yc_mu_predl,
-                    &yc_sd_predr,&yc_sd_predl,fp,kappa,nu);
+                    &yc_sd_predr,&yc_sd_predl,fp,kappa,nu,y_mu_c,y_sd_c,parent_id[i],best_meanl,best_meanr,best_sdl,best_sdr);
     
     node_var[i] = best_var;
     node_xvar[i] = best_split;
+
+
+    
     // saving these best entries
     if(best_split != -1 & best_var != -1.0){
+      
       //printf("[%d,%d]\t Setting node_var[%d] to %d \t\t with a value of %f\t\t best k is %d\n",ndstart[i],ndend[i],i,best_var,best_split,best_k);
       //printf("[%d,%d] --> [%d,%d] u [%d,%d]",)
       ndstart[last_node+1] = ndstart[i];
@@ -235,6 +299,18 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
       ndend[last_node+2] = ndend[i]; 
       rdaughter[i] = last_node + 1;
       ldaughter[i] = last_node + 2;
+      
+      //print_array_double(best_meanr,*nclass);
+      //print_array_double(best_meanl,*nclass);
+      memcpy(y_mu_c+((last_node+1) * *nclass),best_meanr,*nclass * sizeof(double));
+      memcpy(y_sd_c+((last_node+1) * *nclass),best_sdr,*nclass * sizeof(double));
+      memcpy(y_mu_c+((last_node+2) * *nclass),best_meanl,*nclass * sizeof(double));
+      memcpy(y_sd_c+((last_node+2) * *nclass),best_sdl,*nclass * sizeof(double));
+      print_array_double(best_sdl,*nclass);
+      print_array_double(y_sd_c+((last_node+2)* *nclass),*nclass);
+      
+      parent_id[last_node+1] = i;
+      parent_id[last_node+2] = i;
       
       yf_pred[last_node+2] = yf_predl;
       yf_pred[last_node+1] = yf_predr;
@@ -246,11 +322,11 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
       yc_sd_pred[last_node+1] = yc_sd_predr;
       
       last_node = last_node + 2;
-    }else{
-      //printf("gnagna\n");
     }
-    
+    //print_array_double(y_mu_c,*nclass * *nrnodes);
   }
+  //print_array_double(y_mu_c,*nrnodes * *nclass);
+  //print_array_int(parent_id,*nrnodes);
   
 
 }
@@ -301,6 +377,10 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
     // tree prediction
   }
   
+  /*int goat[4] = {1,3,5,3};
+  int bla[3];
+  memcpy(bla,goat+1,3*sizeof(int));
+  print_array_int(bla,3);*/
   fclose(fp);
   PutRNGstate(); 
   
