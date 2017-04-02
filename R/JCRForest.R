@@ -29,6 +29,7 @@ jcr_forest <- function(x,y,mtry,Ntree,minsize=5,bla=1:20){
   ## TODO: figure out how to calculate nrnodes properly...
   nrnodes <- 2*floor(nrow(x)/minsize)+1
   nclass <- length(unique(yf))
+
   #cat(Ntree,"\n\n")
   # Forest building
   rfout <- .C("build_jcr_forest",
@@ -56,7 +57,7 @@ jcr_forest <- function(x,y,mtry,Ntree,minsize=5,bla=1:20){
               kappa= as.numeric(1),
               nu = as.numeric(1),
               PACKAGE="JCRForest")
-  
+
   return(structure(rfout,class="jcr_forest"))
 }
 

@@ -34,12 +34,6 @@ void robust_mean(int *N, double kappa, int nclass, double *mean_child, double *m
 }
 
 void robust_sd(int *N, double kappa, double nu, double n, int nclass, double *sd_child, double *sd_parent,double *store, double *mean_child, double *mean_parent){
-
-  //printf("\n\n%f\n\n",kappa);
-  //print_array_double(sd_parent,nclass);
-  //print_array_double(sd_child,nclass);
-  //print_array_double(mean_child,nclass);
-  //print_array_double(mean_parent,nclass);
   for(int i=0; i<nclass; i++){
     double Z = nu + n - 1 + N[i];
     store[i] = ((double) N[i] / Z) * sd_child[i] + (nu+n-1)/Z * sd_parent[i] + (kappa * (double) N[i]) / (Z * (kappa + N[i])) * pow(mean_parent[i] - mean_child[i],2.0);
@@ -234,6 +228,9 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
   int pcx[*nclass];
   for(int i=0; i < *nclass; i++) pcx[i] = 0;
   for(int i=0; i < *nsample; i++) pcx[yf[ndind[i]]-1]++;
+  
+  yf_pred[0] = which_max(pcx,*nclass)+1;
+  yc_mu_pred[0] = weighted_average(y_mu_c,pcx,*nclass);
   
   double H0_c = H_c(pcx,nclass,*nsample);
   double H0_rc = H_rc(pcx,y_sd_c,nclass,*nsample);
