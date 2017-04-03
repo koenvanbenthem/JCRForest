@@ -3,6 +3,9 @@ predict.jcr_forest <- function(forest,newdata){
   # 1. number of columns
   # possibly: is x numeric?
   nsample <- nrow(newdata)
+  
+  newdata <- data.matrix(newdata)
+  
   pred.out <- .C("forestpred",
                  x=newdata,
                  yc=numeric(nsample),

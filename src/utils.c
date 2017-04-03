@@ -147,7 +147,7 @@ void print_array_int(int *vector, int size){
 
 void print_array_double(double *vector, int size){
   for(int i = 0; i < size; i++){
-    printf("%.2f\t",vector[i]);
+    printf("%.3f\t\t",vector[i]);
   }
   printf("\n");
 }

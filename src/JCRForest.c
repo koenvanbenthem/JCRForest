@@ -6,7 +6,7 @@
 
 double H_c(int *counts, int *nclass, int N){
   
-  double score=0;
+  double score = 0;
   
   for(int i = 0; i < *nclass; i++){
     if(counts[i] > 0){
@@ -62,20 +62,20 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   
   // keeping track of the frequencies of different classes
   // parent, left child, right child
-  int pcx[*nclass];
-  int pcxl[*nclass];
-  int pcxr[*nclass];
+  int* pcx = (int*) Calloc(*nclass,int);
+  int* pcxl = (int*) Calloc(*nclass,int);
+  int* pcxr = (int*) Calloc(*nclass,int);
   
   // Continuous variables
-  double meanl[*nclass];
-  double meanr[*nclass];
-  double sdl[*nclass];
-  double sdr[*nclass];
+  double* meanl = (double*) Calloc(*nclass,double);
+  double* meanr = (double*) Calloc(*nclass,double);
+  double* sdl = (double*) Calloc(*nclass,double);
+  double* sdr = (double*) Calloc(*nclass,double);
   
-  double real_meanl[*nclass];
-  double real_meanr[*nclass];
-  double real_sdl[*nclass];
-  double real_sdr[*nclass];
+  double* real_meanl = (double*) Calloc(*nclass,double);
+  double* real_meanr = (double*) Calloc(*nclass,double);
+  double* real_sdl = (double*) Calloc(*nclass,double);
+  double* real_sdr = (double*) Calloc(*nclass,double);
   
    // setting initial values (i.e. parent frequencies)
   for(int i=0; i < *nclass; i++) pcx[i] = 0;
@@ -83,8 +83,8 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   //for(int i=0; i < *nclass; i++) pcx[i]/= (end-start);
 
   // vectors for storing the explanatory variable (x_choice) as well as the associated indices
-  double x_sort[*nsample];
-  int x_sort_ind[*nsample];
+  double* x_sort = Calloc(*nsample,double);
+  int* x_sort_ind = Calloc(*nsample,int);
   for(int i=start; i<end; i++) x_sort_ind[i] = ndind[i];
   
   //double yc_sorted[*nsample];
@@ -199,33 +199,48 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     *best_split = 0.5*x_sort[*best_k]+0.5*x_sort[*best_k+1];
   }
   
+  Free(pcx);
+  Free(pcxl);
+  Free(pcxr);
+  Free(meanl);
+  Free(meanr);
+  Free(sdl);
+  Free(sdr);
+  Free(real_meanl);
+  Free(real_meanr);
+  Free(real_sdl);
+  Free(real_sdr);
+  Free(x_sort);
+  Free(x_sort_ind);
 }
 
 void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, int *ntree, int *nrnodes, int *minsize, int *ldaughter, int *rdaughter,
                     int *yf_pred, double *yc_mu_pred, double *yc_sd_pred, int *node_var, double *node_xvar, int *mtry,int *nsample,int *nvar, double *kappa, double *nu) {
   
-  int ndstart[*nrnodes];
-  int ndend[*nrnodes];
-  int ndind[*nsample];
-  int last_node = 0;
-  int parent_id[*nrnodes];
+  int* ndstart = (int*) Calloc(*nrnodes,int);
+  int* ndend = (int*) Calloc(*nrnodes,int);
+  int* ndind = (int*) Calloc(*nsample,int);
+  int* parent_id = (int*) Calloc(*nrnodes,int);
+  
   for(int i=0; i<*nrnodes;i++) parent_id[i] = -1;
   ndstart[0] = 0;
   ndend[0] = *nsample;
   for(int i=0; i<*nsample; i++) ndind[i] = i;
+
+  int last_node = 0;
   
   int best_var, best_k,yf_predr,yf_predl;
   double best_split,yc_mu_predr,yc_mu_predl,yc_sd_predr,yc_sd_predl;
   
-  double y_mu_c[*nclass * *nrnodes];
-  double y_sd_c[*nclass * *nrnodes];
+  double* y_mu_c = (double*) Calloc(*nclass * *nrnodes,double);
+  double* y_sd_c =(double*) Calloc(*nclass * *nrnodes,double);
   // void calc_sd_class(double *vector, int *class_vector, int *nclass, int nsample, double *store, double *mean){
   //void calc_mean_class(double *vector, int *class_vector, int *nclass, int nsample,double *store)
   
   calc_mean_class(yc,yf,nclass,*nsample,y_mu_c);
   calc_sd_class(yc,yf,nclass,*nsample,y_sd_c,y_mu_c);
 
-  int pcx[*nclass];
+  int* pcx = (int*) Calloc(*nclass,int);
   for(int i=0; i < *nclass; i++) pcx[i] = 0;
   for(int i=0; i < *nsample; i++) pcx[yf[ndind[i]]-1]++;
   
@@ -235,10 +250,10 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
   double H0_c = H_c(pcx,nclass,*nsample);
   double H0_rc = H_rc(pcx,y_sd_c,nclass,*nsample);
   
-  double best_meanl[*nclass];
-  double best_meanr[*nclass];
-  double best_sdl[*nclass];
-  double best_sdr[*nclass];
+  double* best_meanl = (double*) Calloc(*nclass,double);
+  double* best_meanr = (double*) Calloc(*nclass,double);
+  double* best_sdl = (double*) Calloc(*nclass,double);
+  double* best_sdr = (double*) Calloc(*nclass,double);
   
   for(int i=0; i < *nrnodes; i++){//*nrnodes; i++){
     
@@ -289,26 +304,40 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
       last_node = last_node + 2;
     }
   }
+  
+  Free(ndstart);
+  Free(ndend);
+  Free(ndind);
+  Free(parent_id);
+  Free(y_mu_c);
+  Free(y_sd_c);
+  Free(pcx);
+  Free(best_meanl);
+  Free(best_meanr);
+  Free(best_sdl);
+  Free(best_sdr);
 }
 
 void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample , int *nvar, int *mtry, int *ntree, 
                       int *nrnodes, int *minsize, int *ldaughter, int *rdaughter, int *yf_pred, double *yc_mu_pred, double *yc_sd_pred, int *node_status, 
-                      int *node_var, double *node_xvar, double *dum_vect, int *dum_long, int *dum_ind, double *kappa,double *nu) {
+                      int *node_var, double *node_xvar, double *kappa,double *nu) {
   
 
   GetRNGstate();
   
   double ran_num;
-  
+  //print_array_double(x,5);
   for(int i=0; i < *nrnodes; i++){
     for(int j=0; j < *ntree; j++){
       node_var[j * *nrnodes + i] = -1;
       yf_pred[j * *nrnodes + i] = -1;
     }
   }
-  double x_bag[*nsample * *nvar];
-  double yc_bag[*nsample];
-  int yf_bag[*nsample];
+  
+  double *x_bag = (double *) S_alloc(*nsample * *nvar,sizeof(double));
+  double *yc_bag = (double *) S_alloc(*nsample,sizeof(double));
+  int *yf_bag = (int *) S_alloc(*nsample,sizeof(double));
+  
   int ind;
   // Building the trees
   for(int i = 0; i < *ntree; i++){
@@ -325,7 +354,7 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
         x_bag[k * *nsample + j] = x[k * *nsample + ind];
       }
     }
-    
+    //print_array_double(x_bag,*nsample * *nvar);
     // actual tree building
     build_jcr_tree(x_bag,yc_bag,yf_bag,nclass,i,ntree,nrnodes,minsize,ldaughter+idx,rdaughter+idx,yf_pred+idx,yc_mu_pred+idx,yc_sd_pred+idx,node_var+idx,node_xvar+idx,mtry,nsample,nvar,kappa,nu);
     
