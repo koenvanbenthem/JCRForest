@@ -9,35 +9,62 @@
 # testing <- datap[(Ntrain+1):length(datap)]
 # traindat <- x[training,]
 # trainresp <- y[training,]
-
-gt <- sample(100,20,replace=TRUE)
+library(JCRForest)
+rm(list=ls())
 ynobla <- read.csv("/Users/koen/Dropbox/ML-Scripts/SET3/R249_499.csv")[,-1]
 ynobla$sign <- factor(ynobla$sign+1,levels=1:2)
 xnobla <- read.csv("/Users/koen/Dropbox/ML-Scripts/SET3/S150_249.csv")[,-1]
 # save(ynobla,file="y-nocrash")
 # save(xnobla,file="x-nocrash")
-output <- jcr_forest(xnobla,ynobla,4,Ntree=500,bla=gt)
+# ncol(xnobla)
+output <- jcr_forest(xnobla,ynobla,4,Ntree=50)
+# output2 <- jcr_forest(xnobla,ynobla,5,Ntree=500)
+# lapply(output,FUN = function(x){
+#   if(length(dim(x)==2)){
+#     all(apply(x,1,var)==0)
+#   }
+# })
+
+#plot(ynobla$rate,predict(output,xnobla)$yc)
+#table(ynobla$sign,apply(predict(output,xnobla)$yf,2,which.max))
+# output$ldaughter[24:25,]
+# output$rdaughter[24:25,]
 # 
-# 
-# replicate(20,output <- jcr_forest(x,y,4,Ntree=500))
-# output <- jcr_forest(x,y,4,Ntree=500)
-# 
-# summary(output$yf_pred)
-# hist(output$yf_pred)
-# apply(predict(output,traindat)$yf,2,which.max)
-# round(sqrt(ncol(x)))
-# 
-# ## tree data
+# output2 <- jcr_forest(xnobla,ynobla,5,Ntree=50)
+# identical(output,output2)
+# for(i in 1:length(output)){
+#   cat(i,"_",identical(output[[i]],output2[[i]]),"\n")
+# }
+# # 
+# # 
+# # replicate(20,output <- jcr_forest(x,y,4,Ntree=500))
+# # output <- jcr_forest(x,y,4,Ntree=500)
+# # 
+# # summary(output$yf_pred)
+# # hist(output$yf_pred)
+# # apply(predict(output,traindat)$yf,2,which.max)
+# # round(sqrt(ncol(x)))
+#
+## tree data
 # dat <- data_gen_tree(2000)
-# gt <- sample(100,20,replace=TRUE)
-# output <- jcr_forest(dat$x,dat$y,4,10,bla=gt)
+# # gt <- sample(100,20,replace=TRUE)
+# output <- jcr_forest(dat$x,dat$y,4,10)
+# output2 <- jcr_forest(dat$x,dat$y,4,500)
 # 
+# identical(output1,output2)
+# lapply(output1,FUN = function(x){
+#   if(length(dim(x)==2)){
+#     all(apply(x,1,var)==0)
+#   }
+# })
+# output$ldaughter
 # 
+
 # table(apply(predict(output,output$x)$yf,2,which.max),dat$y$y2)
 # plot(predict(output,output$x)$yc,dat$y$y1)
 # predict(output,matrix(c(0.1,0.9,0.27,0.45),nrow=1))$yf
 # draw_jcr_tree(output,4)
-# 
+
 # t(tmp)[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
 # output$x[!apply(predict(output,output$x)$yf,2,which.max)==as.numeric(dat$y$y2),]
 # output$node_xvar
