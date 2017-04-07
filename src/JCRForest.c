@@ -10,7 +10,7 @@ double H_c(int *counts, int *nclass, int N){
   
   for(int i = 0; i < *nclass; i++){
     if(counts[i] > 0){
-      score -= (double) counts[i]/ (double) N * log((double) counts[i]/ (double) N);
+      score -= ((double) counts[i] / (double) N) * log((double) counts[i]/ (double) N);
     }
   }
   return(score);
@@ -24,6 +24,7 @@ double H_rc(int *counts,double *sd, int *nclass, int N){
       score += ((double) counts[i]) * 0.5*log(2.0*PI*exp(1)*sd[i])/((double) N); 
     }
   }
+
   return score;
 }
 
@@ -53,7 +54,7 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
   *best_var = -1;
   *best_split = -1.0;
   *best_k = -1;
-  
+
   // scoring variables
   double best_score = 0.0;
   double curr_score_disc = 0.0;
@@ -80,23 +81,21 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
    // setting initial values (i.e. parent frequencies)
   for(int i=0; i < *nclass; i++) pcx[i] = 0;
   for(int i=start; i < end; i++) pcx[yf[ndind[i]]-1]++;
-  //for(int i=0; i < *nclass; i++) pcx[i]/= (end-start);
 
   // vectors for storing the explanatory variable (x_choice) as well as the associated indices
   double* x_sort = Calloc(*nsample,double);
   int* x_sort_ind = Calloc(*nsample,int);
   for(int i=start; i<end; i++) x_sort_ind[i] = ndind[i];
   
-  //double yc_sorted[*nsample];
-  //int yf_sorted[*nsample];
+  // assign parent score
   if(pid==-1){
     calc_mean_class_I(yc,yf,nclass,start,end,x_sort_ind,meanr);
     calc_sd_class_I(yc,yf,nclass,start,end,x_sort_ind,sdr,meanr);
-    parent_score = 0.5 * (H_c(pcx,nclass,end-start)/H0_c + H_rc(pcx,sdr,nclass,end-start)/H0_rc);
+    parent_score = 0.5 * (H_rc(pcx,sdr,nclass,end-start)/H0_rc + H_c(pcx,nclass,end-start)/H0_c);
   } else {
-    parent_score = 0.5 * (H_c(pcx,nclass,end-start)/H0_c + H_rc(pcx,y_sd_c+pid*(*nclass),nclass,end-start)/H0_rc);
+    parent_score = 0.5 * (H_rc(pcx,y_sd_c+pid*(*nclass),nclass,end-start)/H0_rc + H_c(pcx,nclass,end-start)/H0_c);
   }
-  pid = -1;
+  
   for(int i=0; i < *mtry; i++){
 
     // select variable
@@ -111,15 +110,12 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
     // sort x variables and obtain the ordering -- adapt x_sort_ind properly
     R_qsort_I(x_sort,x_sort_ind,start+1,end);
 
-    // assign parent score
-    
     // assign children distribution vectors (left child gets all, right gets none)
     memcpy(pcxl,pcx,*nclass * sizeof(int));
     
     //printf("%d, %d\n",pcxl[0],pcxl[1]);
     for(int k=0; k < *nclass; k++) pcxr[k] = 0;
 
-    //printf("%f\n",parent_score);
     //curr_score = parent_score; // initially one of the children is the same as the parent, the other is empty
     
     int Nl = end-start;
@@ -141,11 +137,12 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
       
       // make robust
       calc_mean_class_I(yc,yf,nclass,start,k+1,x_sort_ind,meanr);
-      calc_sd_class_I(yc,yf,nclass,start,k+1,x_sort_ind,sdr,meanr);
-      
       calc_mean_class_I(yc,yf,nclass,k+1,end,x_sort_ind,meanl);
+      
+      calc_sd_class_I(yc,yf,nclass,start,k+1,x_sort_ind,sdr,meanr);
       calc_sd_class_I(yc,yf,nclass,k+1,end,x_sort_ind,sdl,meanl);
-      double n = 1;
+      
+      double n = 1.0;
       if(pid!=-1){
         
         robust_mean(pcxl,*kappa,*nclass,meanl,y_mu_c+(pid* *nclass),real_meanl);
@@ -161,7 +158,7 @@ void find_best_split(double *x, double *yc, int *yf,int *nclass, int *mtry,int *
       }
       curr_score_cont =  ((double) Nr/((double) (end-start)))*H_rc(pcxr,real_sdr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_rc(pcxl,real_sdl,nclass,Nl);
       curr_score_disc = ((double) Nr/((double) (end-start)))*H_c(pcxr,nclass,Nr) + ((double) Nl/((double) (end-start)))*H_c(pcxl,nclass,Nl);
-      double nvv = 0.5 * (curr_score_disc/H0_c + curr_score_cont/H0_rc);
+      double nvv = 0.5 * (curr_score_cont/H0_rc + curr_score_disc/H0_c);
 
       if(parent_score-nvv > best_score){
         best_score = parent_score-nvv;
@@ -234,9 +231,7 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
   
   double* y_mu_c = (double*) Calloc(*nclass * *nrnodes,double);
   double* y_sd_c =(double*) Calloc(*nclass * *nrnodes,double);
-  // void calc_sd_class(double *vector, int *class_vector, int *nclass, int nsample, double *store, double *mean){
-  //void calc_mean_class(double *vector, int *class_vector, int *nclass, int nsample,double *store)
-  
+
   calc_mean_class(yc,yf,nclass,*nsample,y_mu_c);
   calc_sd_class(yc,yf,nclass,*nsample,y_sd_c,y_mu_c);
 
@@ -249,13 +244,18 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
   
   double H0_c = H_c(pcx,nclass,*nsample);
   double H0_rc = H_rc(pcx,y_sd_c,nclass,*nsample);
+
+  if(H0_rc < 0){
+    H0_rc = -H0_rc;
+  }
+
   
   double* best_meanl = (double*) Calloc(*nclass,double);
   double* best_meanr = (double*) Calloc(*nclass,double);
   double* best_sdl = (double*) Calloc(*nclass,double);
   double* best_sdr = (double*) Calloc(*nclass,double);
   
-  for(int i=0; i < *nrnodes; i++){//*nrnodes; i++){
+  for(int i=0; i < *nrnodes; i++){
     
     if(last_node > *nrnodes-3 || i > last_node) break;
     
@@ -264,7 +264,7 @@ void build_jcr_tree(double *x, double *yc, int *yf, int *nclass, int curr_tree, 
     }
     yf_predr = -2;
     yf_predl = -2;
-    //int i=0; // temporary for testing purposes
+    
     find_best_split(x,yc,yf,nclass,mtry,nsample,nvar,minsize,H0_c,H0_rc,ndstart[i],ndend[i],ndind, &best_var, 
                     &best_split, &best_k, &yf_predr, &yf_predl,&yc_mu_predr,&yc_mu_predl,
                     &yc_sd_predr,&yc_sd_predl,kappa,nu,y_mu_c,y_sd_c,parent_id[i],best_meanl,best_meanr,best_sdl,best_sdr);
@@ -326,7 +326,7 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
   GetRNGstate();
   
   double ran_num;
-  //print_array_double(x,5);
+  
   for(int i=0; i < *nrnodes; i++){
     for(int j=0; j < *ntree; j++){
       node_var[j * *nrnodes + i] = -1;
@@ -354,7 +354,7 @@ void build_jcr_forest(double *x, double* yc, int* yf, int *nclass, int *nsample 
         x_bag[k * *nsample + j] = x[k * *nsample + ind];
       }
     }
-    //print_array_double(x_bag,*nsample * *nvar);
+
     // actual tree building
     build_jcr_tree(x_bag,yc_bag,yf_bag,nclass,i,ntree,nrnodes,minsize,ldaughter+idx,rdaughter+idx,yf_pred+idx,yc_mu_pred+idx,yc_sd_pred+idx,node_var+idx,node_xvar+idx,mtry,nsample,nvar,kappa,nu);
     

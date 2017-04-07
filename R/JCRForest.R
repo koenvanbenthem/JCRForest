@@ -26,6 +26,7 @@ jcr_forest <- function(x,y,mtry,Ntree,minsize=5){
 
   yf <- as.integer(y[,sapply(y,class) %in% c('factor')])
   
+  #x <- apply(x,2,as.numeric)
   x <- data.matrix(x)
   
   ## TODO: figure out how to calculate nrnodes properly...
