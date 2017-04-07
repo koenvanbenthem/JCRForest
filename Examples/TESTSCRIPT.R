@@ -13,11 +13,13 @@ library(JCRForest)
 rm(list=ls())
 ynobla <- read.csv("/Users/koen/Dropbox/ML-Scripts/SET3/R249_499.csv")[,-1]
 ynobla$sign <- factor(ynobla$sign+1,levels=1:2)
+#ynobla$sign <- sample(ynobla$sign)
+#ynobla$rate <- 10*ynobla$rate
 xnobla <- read.csv("/Users/koen/Dropbox/ML-Scripts/SET3/S150_249.csv")[,-1]
 # save(ynobla,file="y-nocrash")
 # save(xnobla,file="x-nocrash")
 # ncol(xnobla)
-output <- jcr_forest(xnobla,ynobla,4,Ntree=50)
+output <- jcr_forest(xnobla,ynobla,20,Ntree=10,minsize = 3)
 # output2 <- jcr_forest(xnobla,ynobla,5,Ntree=500)
 # lapply(output,FUN = function(x){
 #   if(length(dim(x)==2)){
@@ -25,11 +27,42 @@ output <- jcr_forest(xnobla,ynobla,4,Ntree=50)
 #   }
 # })
 
-#plot(ynobla$rate,predict(output,xnobla)$yc)
-#table(ynobla$sign,apply(predict(output,xnobla)$yf,2,which.max))
+plot(ynobla$rate,predict(output,xnobla)$yc)
+abline(a=0,b=1)
+table(ynobla$sign,apply(predict(output,xnobla)$yf,2,which.max))
+
+
+
+
+#output$ldaughter
+
 # output$ldaughter[24:25,]
 # output$rdaughter[24:25,]
 # 
+pdf("tst2.pdf")
+xnoblas <- xnobla
+xnoblas$silly <- ynobla$rate
+output_silly <- jcr_forest(xnoblas,ynobla,23,Ntree=20,minsize=5)
+plot(ynobla$rate,predict(output_silly,xnoblas)$yc,xlab="population growth rate",ylab="predicted population growth rate",main="predictions on training data")
+abline(a=0,b=1)
+#draw_jcr_tree(output_silly,9)
+table(ynobla$sign,apply(predict(output_silly,xnoblas)$yf,2,which.max))
+table(ynobla$rate <= 1,ynobla$sign)
+
+miss <- ynobla[(ynobla$sign!=apply(predict(output_silly,xnoblas)$yf,2,which.max)),]
+points(miss$rate,miss$rate,col="red")
+dev.off()
+rm(list=ls())
+x <- data.frame(x1=as.numeric(rep(1:10,20)),x2=runif(200))
+y <- data.frame(y1=rnorm(nrow(x),x$x1,0.01),y2=as.factor(round(10*x$x2)))
+
+lm(y$y1~x)
+sil <- jcr_forest(x,y,2,100)
+
+plot(y$y1,predict(sil,x)$yc)
+table(y$y2,apply(predict(sil,x)$yf,2,which.max))
+abline(b=1,a=0)
+mean(y$y1[x$x1==2])
 # output2 <- jcr_forest(xnobla,ynobla,5,Ntree=50)
 # identical(output,output2)
 # for(i in 1:length(output)){
@@ -45,10 +78,10 @@ output <- jcr_forest(xnobla,ynobla,4,Ntree=50)
 # # apply(predict(output,traindat)$yf,2,which.max)
 # # round(sqrt(ncol(x)))
 #
-## tree data
-# dat <- data_gen_tree(2000)
-# # gt <- sample(100,20,replace=TRUE)
-# output <- jcr_forest(dat$x,dat$y,4,10)
+# tree data
+dat <- data_gen_tree(2000)
+# gt <- sample(100,20,replace=TRUE)
+output <- jcr_forest(dat$x,dat$y,4,10)
 # output2 <- jcr_forest(dat$x,dat$y,4,500)
 # 
 # identical(output1,output2)
@@ -60,8 +93,8 @@ output <- jcr_forest(xnobla,ynobla,4,Ntree=50)
 # output$ldaughter
 # 
 
-# table(apply(predict(output,output$x)$yf,2,which.max),dat$y$y2)
-# plot(predict(output,output$x)$yc,dat$y$y1)
+table(apply(predict(output,output$x)$yf,2,which.max),dat$y$y2)
+plot(predict(output,output$x)$yc,dat$y$y1)
 # predict(output,matrix(c(0.1,0.9,0.27,0.45),nrow=1))$yf
 # draw_jcr_tree(output,4)
 
