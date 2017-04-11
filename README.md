@@ -10,7 +10,6 @@ An example use is:
 ```
 library(JCRForest)
 dat <- data_gen_tree(200)
-gt <- sample(100,20,replace=TRUE)
-output <- jcr_forest(dat$x,dat$y,2,10,bla=gt)
+output <- jcr_forest(dat$x,dat$y,2,10)
 draw_jcr_tree(output,2)
 ```
